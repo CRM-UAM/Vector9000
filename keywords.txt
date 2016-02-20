@@ -1,0 +1,20 @@
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+Vector9000   KEYWORD1
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+
+ledOn   KEYWORD2
+ledOff  KEYWORD2
+setSpeed    KEYWORD2
+setRSpeed   KEYWORD2
+setLSpeed   KEYWORD2
+calibrateIR KEYWORD2
+getIRRaw    KEYWORD2
+readLine    KEYWORD2
+setPID  KEYWORD2
+getErrorLine    KEYWORD2
