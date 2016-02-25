@@ -77,7 +77,7 @@ void Vector9000::setLSpeed( int s ){
     }
 }
 
-void Vector9000::calibrateIR( int time ){
+void Vector9000::calibrateIR( int time, bool printflag ){
   int i;
   ledOn();
   for (i = 0; i < 40*time; i++)
@@ -86,22 +86,22 @@ void Vector9000::calibrateIR( int time ){
   }
   ledOff();
   //print results
-  Serial.println("Resultados\nMinimos:");
+  if(printflag)Serial.println("Resultados\nMinimos:");
   for (i = 0; i < Vector9000::NUM_IR_SENSORS; i++){
-    Serial.print(qtrrc.calibratedMinimumOn[i]);
-    Serial.print(" ");
+    if(printflag)Serial.print(qtrrc.calibratedMinimumOn[i]);
+    if(printflag)Serial.print(" ");
   }
-  Serial.println();
-  Serial.println("Maximos:");
+  if(printflag)Serial.println();
+  if(printflag)Serial.println("Maximos:");
   for (i = 0; i < Vector9000::NUM_IR_SENSORS; i++){
-    Serial.print(qtrrc.calibratedMaximumOn[i]);
-    Serial.print(" ");
+    if(printflag)Serial.print(qtrrc.calibratedMaximumOn[i]);
+    if(printflag)Serial.print(" ");
   }
-  Serial.println();
+  if(printflag)Serial.println();
 }
 
 
-inline void Vector9000::getIRRaw( unsigned int *values ){
+void Vector9000::getIRRaw( unsigned int *values ){
     qtrrc.read(values);
 }
 
@@ -115,7 +115,7 @@ double Vector9000::getErrorLine( void ){
     int error = qtrrc.readLine(values) - (Vector9000::NUM_IR_SENSORS-1)*500; //Centrar el error en el 0
     unsigned long currentTime=micros();
 
-    if(currentTime - _lastTimeExec > 10000){//Genero el error derivativo
+    if(currentTime - _lastTimeExec > 1000){//Genero el error derivativo
         _DerivativeErrorTerm = _kd*(error-_lastError)/(currentTime-_lastTimeExec);
         _lastTimeExec = currentTime;
         _lastError = error;

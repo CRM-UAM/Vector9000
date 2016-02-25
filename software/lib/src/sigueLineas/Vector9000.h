@@ -38,13 +38,13 @@ class Vector9000
      * calibrate IR sensors
      * @param time duration in seconds
      */
-    void calibrateIR( int time );
+    void calibrateIR( int time, bool printflag );
 
     /**
      * read IR-array values
      * @param  values pointer to hold de values readed
      */
-    void getIRRaw(unsigned int *values );
+    void getIRRaw(unsigned int *values);
 
     /**
      * read line with IR sensors
@@ -59,6 +59,9 @@ class Vector9000
      * @param ki     Integral constant value
      */
     void setPID( double KP, double KD, double KI );
+    void setP( double KP);
+    void setI( double KI);
+    void setD( double KD);
     /**
      * Compute error line with PID controller
      * @return  error line value [-255, 255]
@@ -69,10 +72,10 @@ class Vector9000
     static const int TIMEOUT;
     static const uint8_t IR1, IR2, IR3, IR4, IR5, IR6, IR7, IR8;
 
-  private:
     double _kp;
     double _kd;
     double _ki;
+  private:
     double _DerivativeErrorTerm;
     unsigned long _lastTimeExec;
     int _lastError;
@@ -84,6 +87,15 @@ inline void Vector9000::setPID( double KP, double KD, double KI ){
   _kp = KP;
   _kd = KD;
   _ki = KI;
+}
+inline void Vector9000::setP( double KP){
+  _kp = KP;
+}
+inline void Vector9000::setI( double KI){
+  _ki = KI;
+};
+inline void Vector9000::setD( double KD){
+  _kd = KD;
 }
 
 inline void Vector9000::setSpeed( int lSpeed, int rSpeed ){
