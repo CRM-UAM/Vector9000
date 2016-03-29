@@ -10,7 +10,7 @@ $fn = 50;
 
 inches_to_mm = 25.4;
 
-shell_thickness = 8;
+shell_thickness = 4;
 sensor_width = 75.2;
 sensor_depth = 13.2;
 support_thickness = 1;

@@ -3,11 +3,11 @@
 // CC-BY-SA license (http://creativecommons.org/licenses/by-sa/3.0/)
 // Check http://www.thingiverse.com/thing:65012 for more information
 
-translate([165,55,30])rotate([0,0,180])import("base_velocistaEdu_fixed.stl");
+#translate([165,55,30])rotate([0,0,180])import("base_velocistaEdu_fixed.stl");
 
-longitudPlaca=130;
-anchoPlaca=longitudPlaca/1.5;
-grosorPlaca=5;
+longitudPlaca=140;
+anchoPlaca=longitudPlaca/1.25;
+grosorPlaca=3;
 separacionTornilloMotores=16.8;
 offsetRueda=5;
 diametroRueda=42;
@@ -33,7 +33,7 @@ grosorPegamento=1;
 
 anchoSoporteMotores=15;
 
-longitudBateria = 55;
+longitudBateria = 58;
 
 ancho_placaCNY70 = 60;
 
@@ -65,8 +65,10 @@ module placaBaseSinBola(nomotors=0) {
 	minkowski() {
    union() {
 	  hull() {
+        translate([50/2,-16,0])
+           cube([anchoPlaca-50,longitud_zona_motores,grosorPlaca/2]);
 		cube([anchoPlaca,longitud_zona_motores,grosorPlaca/2]);
-		translate([anchoPlaca/2,longitudPlaca-anchoPlaca/2,grosorPlaca/4])
+		translate([anchoPlaca/2,longitudPlaca-32,grosorPlaca/4])
 			//cylinder(r=anchoPlaca/3, h=grosorPlaca, $fn=150);
          cube([ancho_placaCNY70,longitudPlaca-anchoPlaca/2,grosorPlaca/2],center=true);
 	  }
@@ -85,6 +87,7 @@ module placaBaseSinBola(nomotors=0) {
    }
    cylinder(r=corner_radius, h=grosorPlaca/2, $fn=10);
    }
+   soportesBateria();
 }
 
 module placaBase() {
@@ -92,14 +95,14 @@ module placaBase() {
 		placaBaseSinBola();
 
 		//Hueco en chasis
-			translate([anchoPlaca/2,5,0])
-				cube([longitudBateria,18,100],center=true);
+			translate([anchoPlaca/2,0,2.5+0.5])
+				cube([longitudBateria,31,5],center=true);
 			translate([anchoPlaca/2,longitud_zona_motores+25,-5])
 				cube([anchoPlaca/1.5,40,100],center=true);
 hull(){
 			translate([anchoPlaca/2-ancho_placaCNY70/2,longitud_zona_motores+57,-5])
 				cube([ancho_placaCNY70,0.0001,100]);
-			translate([anchoPlaca/2-ancho_placaCNY70/3-10/2,longitud_zona_motores+75+20,-5])
+			translate([anchoPlaca/2-ancho_placaCNY70/3-10/2,longitud_zona_motores+125,-5])
 				cube([ancho_placaCNY70/1.5+10,0.0001,100]);
 }
 	}
@@ -131,11 +134,30 @@ module taladrosSoporteSensores() {
 }
 
 module taladrosBateria() {
-  translate([anchoPlaca/2,3,0]) {
+  translate([anchoPlaca/2,-3,0]) {
     translate([-longitudBateria/2-4,0,0])
-      cylinder(r=taladro_arduino/2, h=grosorPlaca+10,center=true, $fn=resolucion_taladros);
+      cylinder(r=5/2, h=grosorPlaca+10,center=true, $fn=resolucion_taladros);
     translate([longitudBateria/2+4,0,0])
-      cylinder(r=taladro_arduino/2, h=grosorPlaca+10,center=true, $fn=resolucion_taladros);
+      cylinder(r=5/2, h=grosorPlaca+10,center=true, $fn=resolucion_taladros);
+  }
+}
+
+module bateria(){
+    translate([anchoPlaca/2,0,15/2+0.5+1])
+    rotate([90,0,0])
+    color("green") cube([58,15,30],center=true);
+}
+
+module soportesBateria() {
+  //bateria();
+  difference() {
+  translate([anchoPlaca/2,-3,0]) {
+    translate([-longitudBateria/2+1,0,0])
+      cylinder(r1=5/2, r2=23/2, h=grosorPlaca+6, $fn=resolucion_taladros);
+    translate([longitudBateria/2-1,0,0])
+      cylinder(r1=5/2, r2=23/2, h=grosorPlaca+6, $fn=resolucion_taladros);
+  }
+  bateria();
   }
 }
 
@@ -177,9 +199,9 @@ module CRM_BOT_chassis_placa() {
                  cube([65,65,grosorPlaca],center=true);
          }
 		taladrosMotores(margen_motores, margenY_motores);
-      taladrosSoporteSensores();
-      taladrosBateria();
-      taladrosCarcasa(2.5);
+      //taladrosSoporteSensores();
+      //taladrosBateria();
+      //taladrosCarcasa(2.5);
 	}
 }
 
