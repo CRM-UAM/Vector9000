@@ -3,6 +3,7 @@
 // CC-BY-SA license (http://creativecommons.org/licenses/by-sa/3.0/)
 // Check http://www.thingiverse.com/thing:65012 for more information
 
+import("base_velocistaEdu_fixed.stl");
 
 longitudPlaca=130;
 anchoPlaca=longitudPlaca/1.5;
