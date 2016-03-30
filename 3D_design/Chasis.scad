@@ -99,9 +99,15 @@ module placaBase() {
 				cube([longitudBateria,31,5],center=true);
 			translate([anchoPlaca/2,longitud_zona_motores+25,-5])
 				cube([anchoPlaca/1.5,40,100],center=true);
+                /*hull(){
+                    translate([0,longitud_zona_motores+57,-5])
+                        cube([ancho_placaCNY70*1.3,0.0001,100]);
+                    translate([0,longitud_zona_motores+125,-5])
+                        cube([ancho_placaCNY70/1.5+10,0.0001,100]);
+                }*/
 hull(){
-			translate([anchoPlaca/2-ancho_placaCNY70/2,longitud_zona_motores+57,-5])
-				cube([ancho_placaCNY70,0.0001,100]);
+			translate([anchoPlaca/2-ancho_placaCNY70*1.3/2,longitud_zona_motores+57,-5])
+				cube([ancho_placaCNY70*1.3,0.0001,100]);
 			translate([anchoPlaca/2-ancho_placaCNY70/3-10/2,longitud_zona_motores+125,-5])
 				cube([ancho_placaCNY70/1.5+10,0.0001,100]);
 }
