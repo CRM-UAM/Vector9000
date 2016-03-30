@@ -35,7 +35,7 @@ anchoSoporteMotores=15;
 
 longitudBateria = 58;
 
-ancho_placaCNY70 = 60;
+ancho_placaCNY70 = 50;
 
 separacion_tornillos_frontal = 26;
 
@@ -298,7 +298,7 @@ module robotFullBase(quitarHuecoFrontal=0) {
 	    translate([0,distancia_adicional,0])
 	      import("LineSensorV2_new.stl");
 	    translate([0,distancia_adicional/2+2,grosorPlaca/2])
-	      cube([30,distancia_adicional+2,grosorPlaca],center=true);
+	      cube([20,distancia_adicional,grosorPlaca],center=true);
 	    // Ensanchar sujección frontal para el hueco de la carcasa
 	    if(quitarHuecoFrontal) translate([0,distancia_adicional/2+2,grosorPlaca/2])
 	      cube([30+5,distancia_adicional+2,grosorPlaca],center=true);
@@ -306,7 +306,7 @@ module robotFullBase(quitarHuecoFrontal=0) {
 	}
 	
 	if(!quitarHuecoFrontal) translate([anchoPlaca/2,longitudPlaca,0])
-	  translate([0,distancia_adicional/2-2,0]) {
+	  translate([0,distancia_adicional/2-5,0]) {
 	    cube([15,distancia_adicional+10,2*2],center=true);
 	    translate([0,-6,2+0.4]) cylinder(r=3.5/2, h=grosorPlaca*2, $fn=resolucion_taladros);
 	  }
