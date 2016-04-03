@@ -17,7 +17,7 @@ class Vector9000
 {
   public:
     Vector9000( double KP, double KD, double KI );
-
+    void config( void );
     void ledOn( void );
     void ledOff( void );
 

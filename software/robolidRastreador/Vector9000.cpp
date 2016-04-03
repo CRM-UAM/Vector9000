@@ -54,12 +54,7 @@ void aumentarCuentaDerecha()
 
 
 Vector9000::Vector9000( double KP=2200, double KD=0.06, double KI=0 ) {
-  pinMode(Vector9000::M_DER_DIR1_PIN, OUTPUT);
-  pinMode(Vector9000::M_DER_DIR2_PIN, OUTPUT);
-  pinMode(Vector9000::M_DER_PWM_PIN, OUTPUT);
-  pinMode(Vector9000::M_IZQ_DIR1_PIN, OUTPUT);
-  pinMode(Vector9000::M_IZQ_DIR2_PIN, OUTPUT);
-  pinMode(Vector9000::M_IZQ_PWM_PIN, OUTPUT);
+
   _kp = KP;
   _kd = KD;
   _ki = KI;
@@ -67,6 +62,16 @@ Vector9000::Vector9000( double KP=2200, double KD=0.06, double KI=0 ) {
   _lastTimeExec = millis();
   _lastError = 0;
 
+
+}
+
+void Vector9000::config( void ){
+  pinMode(Vector9000::M_DER_DIR1_PIN, OUTPUT);
+  pinMode(Vector9000::M_DER_DIR2_PIN, OUTPUT);
+  pinMode(Vector9000::M_DER_PWM_PIN, OUTPUT);
+  pinMode(Vector9000::M_IZQ_DIR1_PIN, OUTPUT);
+  pinMode(Vector9000::M_IZQ_DIR2_PIN, OUTPUT);
+  pinMode(Vector9000::M_IZQ_PWM_PIN, OUTPUT);
   enableInterrupt(Vector9000::ENC_DER_PIN, aumentarCuentaDerecha, CHANGE);
   enableInterrupt(Vector9000::ENC_IZQ_PIN, aumentarCuentaIzquierda, CHANGE);
 }
@@ -310,6 +315,7 @@ int Vector9000::readPosLineBifurcacion( int sig, boolean *bifurcacion){
         }
         lastValueSensor=value;
     }
+    int ind_line_viva=0;
     if(cont_line==0){
         *bifurcacion=false; //no bifurcacion
         if(_last_value < (Vector9000::NUM_IR_SENSORS-1)*1000/2) return 0; // If it last read to the left of center, return 0.
@@ -317,27 +323,17 @@ int Vector9000::readPosLineBifurcacion( int sig, boolean *bifurcacion){
     }else if(cont_line > 1){ //hay mas de una linea, seguir la que corresponde con la bifurcacion
         *bifurcacion=true; // bifurcacion
         if(sig==1){ // quiero girar a la derecha limpio todas menos la ultima linea
-            lastValueSensor=0;
-            int cont_aux=0;
-            for(i=Vector9000::NUM_IR_SENSORS-1;i>=0;i--) {
-                int value = values[i];
-                if(value > 200){
-                    if(lastValueSensor<200)cont_aux++;
-                    if(cont_aux >= 2) values[i]=0; //limpio el sensor no elegido
-                }
-                lastValueSensor=value;
+            for(i=0;i<cont_line-1;i++){
+                for(j=lines[i];values[j]>200;j++)
+                    values[j]=0;
             }
+            ind_line_viva=cont_line-1;
         }else if(sig==-1){ // quiero girar a la izq limpio todas menos la primera linea
-            lastValueSensor=0;
-            int cont_aux=0;
-            for(i=0;i<Vector9000::NUM_IR_SENSORS;i++) {
-                int value = values[i];
-                if(value > 200){
-                    if(lastValueSensor<200)cont_aux++;
-                    if(cont_aux >= 2) values[i]=0; //limpio el sensor no elegido
-                }
-                lastValueSensor=value;
+            for(i=1;i<cont_line;i++){
+                for(j=lines[i];values[j]>200;j++)
+                    values[j]=0;
             }
+            ind_line_viva=0;
         }else if(sig==2){ //quiero seguir defrente
             _last_value= (Vector9000::NUM_IR_SENSORS-1)*1000 / 2; //seguir de frente posicion  de linea centrada
             return _last_value;
@@ -345,10 +341,21 @@ int Vector9000::readPosLineBifurcacion( int sig, boolean *bifurcacion){
     }else{ //solo una linea para seguir.
         if(numSensorsOfLine[0]<=2) *bifurcacion=false;
         else *bifurcacion=true;
+        ind_line_viva=0;
     }
 
     //He limpiado y solo queda una linea, limpio todos los sensores activos menos los dos mas cercanos a donde quiero ir
-
+    if(numSensorsOfLine[ind_line_viva]>2){
+        if(sig==1)
+            for(i=lines[ind_line_viva];values[i]>200 && numSensorsOfLine[ind_line_viva]>2;i++ , numSensorsOfLine[ind_line_viva]--){
+                values[i]=0;
+            }
+        else if(sig==-1)
+            for(i=lines[ind_line_viva]+2;values[i]>200 && numSensorsOfLine[ind_line_viva]>2;i++ , numSensorsOfLine[ind_line_viva]--){
+                values[i]=0;
+            }
+        else{} //Si sig=2 (seguir de frente) no limpio sensores ya que luego coge la media
+    }
 
 
     for(i=0;i<Vector9000::NUM_IR_SENSORS;i++){ //media de los sensores ya limpios para sacar el error de la linea

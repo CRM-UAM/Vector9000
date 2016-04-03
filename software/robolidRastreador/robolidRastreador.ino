@@ -13,7 +13,7 @@
 #define VEL_BASE_CURVA 65
 #define VEL_BASE_FRENO 40
 int VEL_BASE=65;
-#define TIME_CHECK_SIG 50 //tiempo en ms para volver a checkear si la senal leida se mantiene 
+#define TIME_CHECK_SIG 50 //tiempo en ms para volver a checkear si la senal leida se mantiene
 #define VEL_BASE_PRE_INTERSECCION 50
 #define VEL_BASE_BIFURCACION 40
 
@@ -49,6 +49,7 @@ void printTelemetria(float err){
 
 
 void setup(){
+    robot.config();
     Serial.begin(19200);
     delay(20);
     robot.calibrateIR( 5, false );
