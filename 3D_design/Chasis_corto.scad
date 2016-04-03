@@ -3,10 +3,10 @@
 // CC-BY-SA license (http://creativecommons.org/licenses/by-sa/3.0/)
 // Check http://www.thingiverse.com/thing:65012 for more information
 
-#translate([165,55,30])rotate([0,0,180])import("base_velocistaEdu_fixed.stl");
+//#translate([165,55,30])rotate([0,0,180])import("base_velocistaEdu_fixed.stl");
 
-longitudPlaca=140;
-anchoPlaca=longitudPlaca/1.25;
+longitudPlaca=140-53;
+anchoPlaca=140/1.25;
 grosorPlaca=3;
 separacionTornilloMotores=16.8;
 offsetRueda=5;
@@ -42,22 +42,22 @@ separacion_tornillos_frontal = 26;
 longitud_zona_motores = anchoSoporteMotores+2*margenY_motores;
 
 // From MiniSkyBot v2
-module arduinoDrills(taladro_arduino=3.5, center=true, h = grosorPlaca+10) {
+module arduinoDrills(taladro_arduino=3.5, center=true, h = grosorPlaca+20) {
     translate([-51/2,48.4/2,0]) {
 	//-- Arduino drill 1 (top-left)
-    cylinder(r=taladro_arduino/2, h=h,center=center, $fn=resolucion_taladros);
+    cylinder(r=taladro_arduino/2, h=h+1,center=center, $fn=resolucion_taladros);
 
     //-- Arduino drill 2 (bottom-left)
     translate([-1.1,-48.4,0])
-    cylinder(r=taladro_arduino/2, h=h,center=center, $fn=resolucion_taladros);
+    cylinder(r=taladro_arduino/2, h=h+1,center=center, $fn=resolucion_taladros);
 
     //-- Arduino drill 3 (top-right)
     translate([51,-15.3,0])
-    cylinder(r=taladro_arduino/2, h=h,center=center, $fn=resolucion_taladros);
+    cylinder(r=taladro_arduino/2, h=h-1,center=center, $fn=resolucion_taladros);
 
     //-- Arduino drill 3 (top-right)
     translate([51,-15.3-28,0])
-    cylinder(r=taladro_arduino/2, h=h,center=center, $fn=resolucion_taladros);
+    cylinder(r=taladro_arduino/2, h=h-1,center=center, $fn=resolucion_taladros);
 	}
 }
 
@@ -68,9 +68,9 @@ module placaBaseSinBola(nomotors=0) {
         translate([50/2,-16,0])
            cube([anchoPlaca-50,longitud_zona_motores,grosorPlaca/2]);
 		cube([anchoPlaca,longitud_zona_motores,grosorPlaca/2]);
-		translate([anchoPlaca/2,longitudPlaca-32,grosorPlaca/4])
+		translate([anchoPlaca/2,longitudPlaca-5,grosorPlaca/4])
 			//cylinder(r=anchoPlaca/3, h=grosorPlaca, $fn=150);
-         cube([ancho_placaCNY70,longitudPlaca-anchoPlaca/2,grosorPlaca/2],center=true);
+         cube([ancho_placaCNY70+5,longitudPlaca-anchoPlaca/2,grosorPlaca/2],center=true);
 	  }
      if(nomotors) {//hueco para la batería en la carcasa
        translate([anchoPlaca/4,-10,0])
@@ -97,19 +97,19 @@ module placaBase() {
 		//Hueco en chasis
 			translate([anchoPlaca/2,0,2.5+0.5])
 				cube([longitudBateria,31,5],center=true);
-			translate([anchoPlaca/2,longitud_zona_motores+25,-5])
+			*translate([anchoPlaca/2,longitud_zona_motores+25,-5])
 				cube([anchoPlaca/1.5,40,100],center=true);
             translate([anchoPlaca/2,0,-5])
                 hull(){
                     translate([0,longitud_zona_motores+5,-5])
-                        cube([ancho_placaCNY70*1.6,0.0001,100], center=true);
+                        cube([ancho_placaCNY70*1.8,0.0001,100], center=true);
                     translate([0,longitud_zona_motores+45,-5])
                         cube([ancho_placaCNY70+20,0.0001,100], center=true);
                 }
 hull(){
-			translate([anchoPlaca/2-ancho_placaCNY70*1.3/2,longitud_zona_motores+57,-5])
-				cube([ancho_placaCNY70*1.3,0.0001,100]);
-			translate([anchoPlaca/2-ancho_placaCNY70/3-10/2,longitud_zona_motores+125,-5])
+			translate([anchoPlaca/2-ancho_placaCNY70*1.2/2,longitud_zona_motores+57,-5])
+				cube([ancho_placaCNY70*1.2,0.0001,100]);
+			translate([anchoPlaca/2-ancho_placaCNY70/3-10/2,longitud_zona_motores+75,-5])
 				cube([ancho_placaCNY70/1.5+10,0.0001,100]);
 }
 	}
@@ -316,9 +316,8 @@ module robotFullBase(quitarHuecoFrontal=0) {
 	}
 	
 	if(!quitarHuecoFrontal) translate([anchoPlaca/2,longitudPlaca,0])
-	  translate([0,distancia_adicional/2-5,0]) {
-	    cube([15,distancia_adicional+10,2*2],center=true);
-	    translate([0,-6,2+0.4]) cylinder(r=3.5/2, h=grosorPlaca*2, $fn=resolucion_taladros);
+	  #translate([0,distancia_adicional/2+2,0]) {
+	    cube([16,distancia_adicional-3,2*2],center=true);
 	  }
 	
 	}

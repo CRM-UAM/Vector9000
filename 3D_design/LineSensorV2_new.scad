@@ -10,15 +10,15 @@ $fn = 50;
 
 inches_to_mm = 25.4;
 
-shell_thickness = 4;
-sensor_width = 75.2;
-sensor_depth = 13.2;
+shell_thickness = 2;
+sensor_width = 75.2+0.5;
+sensor_depth = 13.2+0.5;
 support_thickness = 1;
 peg_square = 5;
 
 
 finger_thickness = 1.5;
-finger_offset = 8.73;
+finger_offset = 8.73+0.25;
 finger_center = 9.56;
 finger_length = 6.32;
 
@@ -61,7 +61,7 @@ restpoint_hole_depth = 2.5;
 translate([-sensor_holder_length/2,0,0])
   intersection() { // Create rounded border
     sensor_holder();
-    roundedRect([sensor_holder_length,sensor_holder_width,shell_height],2.4);
+    roundedRect([sensor_holder_length,sensor_holder_width,shell_height],1);
   }
 
 //sensor_arm();
@@ -209,7 +209,7 @@ translate([radius,radius,radius])
 minkowski()
 {
 cube(size=[x,y,z]);
-sphere(r=radius);
+rotate([70,0,0]) sphere(r=radius);
 }
 }
 
