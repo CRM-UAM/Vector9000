@@ -95,7 +95,7 @@ void inline activarRecta(){
 
 unsigned long timeUltimaSig=0;
 int sig=0;
-void loop() {
+/*void loop() {
 
     //Seguir linea sin senal detactada hasta ahora
     double errDif = robot.readErrLineWithSignals( &sig );
@@ -118,4 +118,13 @@ void loop() {
         }
     }
 
+}*/
+
+void loop(){
+   int errDif = robot.readPosLineWithSignals( &sig );
+   Serial.print(errDif);
+   Serial.print(": ");
+   Serial.println(sig);
+   delay(200);
 }
+

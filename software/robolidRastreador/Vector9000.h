@@ -61,7 +61,8 @@ class Vector9000
     * @return    Error diferencial para colocar la velocidad de las ruedas
     */
     int readErrLineWithSignals( int *sig );
-    
+    int readPosLineWithSignals( int *sig );
+    int readPosLineBifurcacion( int sig, boolean *bifurcacion);
     /**
      *  Devuelve true si se detecta mas de una linea en los sensores, o si la linea detectada tiene una anchura superior a dos sensores (>3cm)
      */
@@ -100,8 +101,7 @@ class Vector9000
     int _last_value;
 
   
-    int readPosLineWithSignals( int *sig );
-    int readPosLineBifurcacion( int sig, boolean *bifurcacion);
+    
 };
 
 
