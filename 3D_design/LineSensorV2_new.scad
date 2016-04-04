@@ -10,15 +10,15 @@ $fn = 50;
 
 inches_to_mm = 25.4;
 
-shell_thickness = 2;
-sensor_width = 75.2+0.5;
-sensor_depth = 13.2+0.5;
+shell_thickness = 1.5;
+sensor_width = 75.2+1;
+sensor_depth = 13.2+1;
 support_thickness = 1;
 peg_square = 5;
 
 
 finger_thickness = 1.5;
-finger_offset = 8.73+0.25;
+finger_offset = 8.73+0.5;
 finger_center = 9.56;
 finger_length = 6.32;
 

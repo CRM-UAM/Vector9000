@@ -316,7 +316,7 @@ module robotFullBase(quitarHuecoFrontal=0) {
 	}
 	
 	if(!quitarHuecoFrontal) translate([anchoPlaca/2,longitudPlaca,0])
-	  #translate([0,distancia_adicional/2+2,0]) {
+	  translate([0,distancia_adicional/2+2,0]) {
 	    cube([16,distancia_adicional-3,2*2],center=true);
 	  }
 	
