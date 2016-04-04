@@ -175,21 +175,28 @@ int Vector9000::readErrLineWithSignals( int *sig ){
     return _kp*error+_DerivativeErrorTerm;
 }
 
-/**
- * Devuelve la posicion de la linea a seguir ignorando otras senales a los lados
- * @param  sig : puntero para devolver las senales detectadas (sig=0 no senales, sig=1 senal a la der, sig=-1 senal a la izq, sig=2 dos senales )
- * @return  Devuelve la posicion de a linea [0,7000]
- */
-int Vector9000::readPosLineWithSignals( int *sig ){
-    int i,j,h;
-    unsigned int values[Vector9000::NUM_IR_SENSORS];
-    boolean valuesFlag[Vector9000::NUM_IR_SENSORS];
+int calcularMediaSensores(unsigned int *values){
+    int i;
     unsigned long avg=0; // this is for the weighted total, which is long before division
     unsigned int sum=0; // this is for the denominator which is <= 64000
-    //static int _last_value=0; // assume initially that the line is left.
-    int lines[5]={0};
-    float centerOfLine[5]={0};
-    float numSensorsOfLine[5]={0};
+    //Serial.print("DLimpio -> ");
+    for(i=0;i<Vector9000::NUM_IR_SENSORS;i++){ //media de los sensores ya limpios para sacar el error de la linea
+        // only average in values that are above a noise threshold
+        int value = values[i];
+        //Serial.print(" ");
+        //Serial.print(value);
+        if(value > 50) {
+            avg += (long)(value) * (i * 1000);
+            sum += value;
+        }
+    }
+    //Serial.println("");
+    //Serial.print("savg=");Serial.print(avg);Serial.print("sum=");SSerial.println(sum);
+    return avg/sum;
+}
+
+int readMultipleLines(unsigned int *values, int *lines, float *centerOfLine, float *numSensorsOfLine){
+    int i,j;
     qtrrc.readCalibrated(values);
     int cont_line=-1;
     int lastValueSensor=0;
@@ -199,7 +206,6 @@ int Vector9000::readPosLineWithSignals( int *sig ){
         Serial.print(" ");
         Serial.print(value);
         if(value > 300){
-            valuesFlag[i]=true;
             if(lastValueSensor<300){
                 lines[++cont_line]=i;
             }
@@ -211,6 +217,23 @@ int Vector9000::readPosLineWithSignals( int *sig ){
     }
     cont_line++;
     Serial.println("");
+    return cont_line;
+}
+/**
+ * Devuelve la posicion de la linea a seguir ignorando otras senales a los lados
+ * @param  sig : puntero para devolver las senales detectadas (sig=0 no senales, sig=1 senal a la der, sig=-1 senal a la izq, sig=2 dos senales )
+ * @return  Devuelve la posicion de a linea [0,7000]
+ */
+int Vector9000::readPosLineWithSignals( int *sig ){
+    int i,j,h;
+    unsigned int values[Vector9000::NUM_IR_SENSORS];
+    boolean valuesFlag[Vector9000::NUM_IR_SENSORS];
+    //static int _last_value=0; // assume initially that the line is left.
+    int lines[5]={0};
+    float centerOfLine[5]={0};
+    float numSensorsOfLine[5]={0};
+
+    int cont_line = readMultipleLines(values, lines,centerOfLine,numSensorsOfLine);
 
     /*Serial.print("DEBUG ");Serial.print(cont_line); Serial.print("-");
     for(h=0;h<cont_line;h++){
@@ -253,20 +276,8 @@ int Vector9000::readPosLineWithSignals( int *sig ){
     }else{
         *sig=0; //no signales solo una linea para seguir
     }
-    Serial.print("DLimpio -> ");
-    for(i=0;i<Vector9000::NUM_IR_SENSORS;i++){ //media de los sensores ya limpios para sacar el error de la linea
-        // only average in values that are above a noise threshold
-        int value = values[i];
-        Serial.print(" ");
-        Serial.print(value);
-        if(value > 50) {
-            avg += (long)(value) * (i * 1000);
-            sum += value;
-        }
-    }
-    Serial.println("");
-    //Serial.print("savg=");Serial.print(avg);Serial.print("sum=");SSerial.println(sum);
-    _last_value = avg/sum;
+
+    _last_value = calcularMediaSensores(values)
     return _last_value;
 }
 
@@ -274,22 +285,9 @@ boolean Vector9000::detectarBifurcacion( void ){
     int i,j;
     unsigned int values[Vector9000::NUM_IR_SENSORS];
     int lines[5]={0};
-    int centerOfLine[5]={0};
-    int numSensorsOfLine[5]={0};
-    int cont_line=0;
-    int lastValueSensor=0;
-    qtrrc.readCalibrated(values);
-    for(i=0;i<Vector9000::NUM_IR_SENSORS;i++) {
-        int value = values[i];
-        if(value > 300){
-            if(lastValueSensor<300)lines[cont_line++]=i;
-            else{
-                centerOfLine[cont_line]+=i;
-                numSensorsOfLine[cont_line]++;
-            }
-        }
-        lastValueSensor=value;
-    }
+    float centerOfLine[5]={0};
+    float numSensorsOfLine[5]={0};
+    int cont_line = readMultipleLines(values, lines, centerOfLine, numSensorsOfLine);
     if(cont_line > 1) return true;
 
     for(i=0;i<cont_line;i++){
@@ -318,23 +316,11 @@ int Vector9000::readPosLineBifurcacion( int sig, boolean *bifurcacion){
     unsigned int sum; // this is for the denominator which is <= 64000
     //static int _last_value=0; // assume initially that the line is left.
     int lines[5]={0};
-    int centerOfLine[5]={0};
-    int numSensorsOfLine[5]={0};
-    qtrrc.readCalibrated(values);
-    int cont_line=0;
-    int lastValueSensor=0;
-    for(i=0;i<Vector9000::NUM_IR_SENSORS;i++) {
-        int value = values[i];
-        if(value > 300){
-            valuesFlag[i]=true;
-            if(lastValueSensor<300)lines[cont_line++]=i;
-            else{
-                centerOfLine[cont_line]+=i;
-                numSensorsOfLine[cont_line]++;
-            }
-        }
-        lastValueSensor=value;
-    }
+    float centerOfLine[5]={0};
+    float numSensorsOfLine[5]={0};
+
+    int cont_line = readMultipleLines(values, lines, centerOfLine, numSensorsOfLine);
+
     int ind_line_viva=0;
     if(cont_line==0){
         *bifurcacion=false; //no bifurcacion
@@ -377,16 +363,7 @@ int Vector9000::readPosLineBifurcacion( int sig, boolean *bifurcacion){
         else{} //Si sig=2 (seguir de frente) no limpio sensores ya que luego coge la media
     }
 
-
-    for(i=0;i<Vector9000::NUM_IR_SENSORS;i++){ //media de los sensores ya limpios para sacar el error de la linea
-        // only average in values that are above a noise threshold
-        int value = values[i];
-        if(value > 50) {
-            avg += (long)(value) * (i * 1000);
-            sum += value;
-        }
-    }
-    _last_value = avg/sum;
+    _last_value= calcularMediaSensores(values);
     return _last_value;
 
 }
