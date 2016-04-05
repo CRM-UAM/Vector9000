@@ -10,14 +10,16 @@
 
 #include "Arduino.h"
 #include <stdint.h>
-#include "EnableInterrupt.h"
+//#include "EnableInterrupt.h"
 #define EI_ARDUINO_INTERRUPTED_PIN
+
+
 
 class Vector9000
 {
   public:
     Vector9000( double KP, double KD, double KI );
-
+    void config();
     void ledOn( void );
     void ledOff( void );
 
@@ -79,8 +81,7 @@ class Vector9000
     double _kp;
     double _kd;
     double _ki;
-    unsigned long cuentaEncoderIzquierdo;
-    unsigned long cuentaEncoderDerecho; 
+ 
   private:
     double _DerivativeErrorTerm;
     unsigned long _lastTimeExec;

@@ -1,5 +1,5 @@
 #include <Arduino.h>
-#include <EnableInterrupt.h>
+//#include <EnableInterrupt.h>
 #include "Vector9000.h"
 
 #define DIFF_ENCODERS_RECT 50
@@ -42,12 +42,24 @@ void printTelemetria(float err){
     Serial.print(" ");
     Serial.println(robot._ki);
 }
+volatile unsigned long cuentaEncoderIzquierdo = 0; 
+volatile unsigned long cuentaEncoderDerecho = 0;
+void aumentarCuentaIzquierda()
+{
+  cuentaEncoderIzquierdo++;
+}
 
+void aumentarCuentaDerecha()
+{
+  cuentaEncoderDerecho++;
+}
 
 void setup(){
     Serial.begin(19200);
     delay(20);
     robot.calibrateIR( 5, false );
+    attachInterrupt(digitalPinToInterrupt(Vector9000::ENC_DER_PIN), aumentarCuentaDerecha, CHANGE); 
+    attachInterrupt(digitalPinToInterrupt(Vector9000::ENC_IZQ_PIN), aumentarCuentaIzquierda, CHANGE);
 }
 
 long sumErr=0;
@@ -67,13 +79,13 @@ void inline activarCurvas(){
 }
 void inline activarFreno(){
   VEL_BASE= VEL_BASE_FRENO;
-  
+  robot.config();
   //Configurar duracion de frenada
   schedulerVELBASEOn=true;
   callback=&activarCurvas;
   nextTaskTime=millis()+TIME_MAX_FRENADA;
-  nextEndDerTaskCount=robot.cuentaEncoderDerecho+TICK_ENC_MAX_FRENADA;
-  nextEndIzqTaskCount=robot.cuentaEncoderIzquierdo+TICK_ENC_MAX_FRENADA;
+  nextEndDerTaskCount=cuentaEncoderDerecho+TICK_ENC_MAX_FRENADA;
+  nextEndIzqTaskCount=cuentaEncoderIzquierdo+TICK_ENC_MAX_FRENADA;
 }
 
 void inline activarRecta(){
@@ -84,12 +96,12 @@ void inline activarRecta(){
   schedulerVELBASEOn=true;
   callback=&activarFreno;
   nextTaskTime=millis()+TIME_MAX_IN_RECTA;
-  nextEndDerTaskCount=robot.cuentaEncoderDerecho+TICK_ENC_MAX_RECTA;
-  nextEndIzqTaskCount=robot.cuentaEncoderIzquierdo+TICK_ENC_MAX_RECTA;
+  nextEndDerTaskCount=cuentaEncoderDerecho+TICK_ENC_MAX_RECTA;
+  nextEndIzqTaskCount=cuentaEncoderIzquierdo+TICK_ENC_MAX_RECTA;
 }
 
 
-void loop() {
+/*void loop() {
     if(schedulerVELBASEOn && (millis()>nextTaskTime || robot.cuentaEncoderDerecho>nextEndDerTaskCount || robot.cuentaEncoderIzquierdo>nextEndIzqTaskCount) ){ //planificador por tiempo para acelerar/frenar en recta
       schedulerVELBASEOn=false;
       callback();
@@ -106,4 +118,10 @@ void loop() {
       }
     }
     
+}*/
+
+void loop(){
+  Serial.println(cuentaEncoderIzquierdo);
+  delay(500);
 }
+
