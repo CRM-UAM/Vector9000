@@ -200,11 +200,11 @@ int readMultipleLines(unsigned int *values, int *lines, float *centerOfLine, flo
     qtrrc.readCalibrated(values);
     int cont_line=-1;
     int lastValueSensor=0;
-    Serial.print("D -> ");
+    //Serial.print("D -> ");
     for(i=0;i<Vector9000::NUM_IR_SENSORS;i++) {
         int value = values[i];
-        Serial.print(" ");
-        Serial.print(value);
+        //Serial.print(" ");
+        //Serial.print(value);
         if(value > 300){
             if(lastValueSensor<300){
                 lines[++cont_line]=i;
@@ -216,7 +216,7 @@ int readMultipleLines(unsigned int *values, int *lines, float *centerOfLine, flo
         lastValueSensor=value;
     }
     cont_line++;
-    Serial.println("");
+    //sSerial.println("");
     return cont_line;
 }
 /**
@@ -227,7 +227,6 @@ int readMultipleLines(unsigned int *values, int *lines, float *centerOfLine, flo
 int Vector9000::readPosLineWithSignals( int *sig ){
     int i,j,h;
     unsigned int values[Vector9000::NUM_IR_SENSORS];
-    boolean valuesFlag[Vector9000::NUM_IR_SENSORS];
     //static int _last_value=0; // assume initially that the line is left.
     int lines[5]={0};
     float centerOfLine[5]={0};
@@ -251,6 +250,7 @@ int Vector9000::readPosLineWithSignals( int *sig ){
         if(_last_value < (Vector9000::NUM_IR_SENSORS-1)*1000/2) return 0; // If it last read to the left of center, return 0.
         else return (Vector9000::NUM_IR_SENSORS-1)*1000; // If it last read to the right of center, return the max.
     }else if(cont_line > 1){ //hay mas de una linea, seguir la mas cercana a la detectada anteriormente (_last_value)
+        Serial.println("ALERTA SIGNAL");
         double min_dist_line=9000;
         int min_ind=0;
         for(j=0;j<cont_line;j++){ //busco la linea que mas cercana esta al _last_value. Esta es la linea a seguir, las demas son señales
@@ -277,12 +277,12 @@ int Vector9000::readPosLineWithSignals( int *sig ){
         *sig=0; //no signales solo una linea para seguir
     }
 
-    _last_value = calcularMediaSensores(values)
+    _last_value = calcularMediaSensores(values);
     return _last_value;
 }
 
 boolean Vector9000::detectarBifurcacion( void ){
-    int i,j;
+    int i;
     unsigned int values[Vector9000::NUM_IR_SENSORS];
     int lines[5]={0};
     float centerOfLine[5]={0};
@@ -311,9 +311,6 @@ double Vector9000::readErrLineBifurcacion( int sig, boolean *bifurcacion){
 int Vector9000::readPosLineBifurcacion( int sig, boolean *bifurcacion){
     int i,j;
     unsigned int values[Vector9000::NUM_IR_SENSORS];
-    boolean valuesFlag[Vector9000::NUM_IR_SENSORS];
-    unsigned long avg; // this is for the weighted total, which is long before division
-    unsigned int sum; // this is for the denominator which is <= 64000
     //static int _last_value=0; // assume initially that the line is left.
     int lines[5]={0};
     float centerOfLine[5]={0};
@@ -350,6 +347,16 @@ int Vector9000::readPosLineBifurcacion( int sig, boolean *bifurcacion){
         ind_line_viva=0;
     }
 
+    double lastPos=(_last_value*1.0f)/1000.0f;
+    double dist= abs( lastPos - centerOfLine[ind_line_viva]/numSensorsOfLine[ind_line_viva]);
+    if( dist > lastPos  && (sig==-1 || (lastPos < 1 && sig!=1))){ //realmente la linea mas cercana se ha perdido por el 0
+        _last_value=0;
+        return 0;
+    }
+    if( dist > (Vector9000::NUM_IR_SENSORS-1)-lastPos && (sig==1 || (lastPos>(Vector9000::NUM_IR_SENSORS-1) && sig!=-1))){//realmente la linea mas cercana se ha perdido por el 7000
+        _last_value=(Vector9000::NUM_IR_SENSORS-1)*1000;
+        return _last_value;
+    }
     //He limpiado y solo queda una linea, limpio todos los sensores activos menos los dos mas cercanos a donde quiero ir
     if(numSensorsOfLine[ind_line_viva]>2){
         if(sig==1)
@@ -362,6 +369,7 @@ int Vector9000::readPosLineBifurcacion( int sig, boolean *bifurcacion){
             }
         else{} //Si sig=2 (seguir de frente) no limpio sensores ya que luego coge la media
     }
+
 
     _last_value= calcularMediaSensores(values);
     return _last_value;

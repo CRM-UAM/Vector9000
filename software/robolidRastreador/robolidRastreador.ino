@@ -2,6 +2,11 @@
 #include <EnableInterrupt.h>
 #include "Vector9000.h"
 
+#define TIME_IGNORE_AFTER_BIF 750
+#define TIME_IGNORE_AFTER_SIGNAL 50
+
+#define DIF_B_SIGCONT 8
+
 #define DIFF_ENCODERS_RECT 50
 #define TIME_MAX_IN_RECTA 2000 //tiempo máximo que está el robot en recta antes de frena. En ms.
 #define TIME_MAX_FRENADA 500 //tiempo maximo de duracion de frenada tras recta
@@ -9,15 +14,15 @@
 #define TICK_ENC_MAX_FRENADA 100 //ticks máximos que dura la frenada
 
 #define INTERVAL_RECT_TASK 500
-#define VEL_BASE_RECTA 70
-#define VEL_BASE_CURVA 65
-#define VEL_BASE_FRENO 40
-int VEL_BASE=65;
+#define VEL_BASE_RECTA 50
+#define VEL_BASE_CURVA 45
+#define VEL_BASE_FRENO 42
+int VEL_BASE=50;
 #define TIME_CHECK_SIG 50 //tiempo en ms para volver a checkear si la senal leida se mantiene
 #define VEL_BASE_PRE_INTERSECCION 50
-#define VEL_BASE_BIFURCACION 40
+#define VEL_BASE_BIFURCACION 44
 
-Vector9000 robot = Vector9000(0.0481,2750.283,0);//(kp,kd, ki);
+Vector9000 robot = Vector9000(0.04,4000.283,0);//(kp,kd, ki);
 
 
 boolean schedulerVELBASEOn=false;
@@ -93,15 +98,16 @@ void inline activarRecta(){
   nextEndIzqTaskCount=robot.cuentaEncoderIzquierdo+TICK_ENC_MAX_RECTA;
 }
 
-unsigned long timeUltimaSig=0;
+/*unsigned long timeUltimaSig=0;
 int sig=0;
-/*void loop() {
-
+void loop() {
+    digitalWrite(Vector9000::LED,LOW);
     //Seguir linea sin senal detactada hasta ahora
     double errDif = robot.readErrLineWithSignals( &sig );
     robot.setSpeed( VEL_BASE - errDif, VEL_BASE + errDif );
     //sig = detectarSignals(); //devuelve 0=no signal, 1=signal derecha, -1=signal izq, 2=signal doble
     while(sig!=0){ //senal detectada, seguir linea hasta encontrar inteseccion
+        digitalWrite(Vector9000::LED,HIGH);
         int sigtemp;
         errDif = robot.readErrLineWithSignals(&sigtemp); //Lee el error de la linea sin verse afectado por las senales
         robot.setSpeed( VEL_BASE_PRE_INTERSECCION - errDif, VEL_BASE_PRE_INTERSECCION + errDif );
@@ -119,12 +125,60 @@ int sig=0;
     }
 
 }*/
-
+unsigned int sigCont[3]={0};
 void loop(){
-   int errDif = robot.readPosLineWithSignals( &sig );
-   Serial.print(errDif);
-   Serial.print(": ");
-   Serial.println(sig);
-   delay(200);
+  int sig=0;
+  double errDif = robot.readErrLineWithSignals( &sig );
+  robot.setSpeed( VEL_BASE - errDif, VEL_BASE + errDif );
+  if(sig!=0){
+    if(sig<0){
+      sigCont[0]++;
+    }else{
+      sigCont[sig]++;
+    }
+  }
+  if(sigCont[0]>sigCont[1]+DIF_B_SIGCONT && sigCont[0]>sigCont[2]+DIF_B_SIGCONT){
+    sig=-1;
+  }else if(sigCont[1]>sigCont[0]+DIF_B_SIGCONT && sigCont[1]>sigCont[2]+DIF_B_SIGCONT){
+    sig=1;
+  }else if(sigCont[2]>sigCont[0]+DIF_B_SIGCONT && sigCont[2]>sigCont[1]+DIF_B_SIGCONT){
+    sig=2;
+  }else{
+    sig = 0;
+  }
+  if(sig!=0){
+    int sigcont0=0;
+    int sig2null=0;
+    while(sigcont0 <  DIF_B_SIGCONT ){
+      double errDif2 = robot.readErrLineWithSignals( &sig2null );
+      robot.setSpeed( VEL_BASE_PRE_INTERSECCION - errDif2, VEL_BASE_PRE_INTERSECCION + errDif2 );
+      if(sig2null==0)sigcont0++;
+    }
+    digitalWrite(Vector9000::LED,LOW);
+    boolean bif=false;
+    while(!bif){
+      double errEnBifurcacion = robot.readErrLineBifurcacion(sig, &bif); //Lee el error de la linea sin verse afectado por las senales
+      robot.setSpeed( VEL_BASE_BIFURCACION - errEnBifurcacion, VEL_BASE_BIFURCACION + errEnBifurcacion );
+      Serial.println(bif);
+    }
+    digitalWrite(Vector9000::LED,HIGH);
+    unsigned long time2ignore=millis()+TIME_IGNORE_AFTER_BIF;
+    while(millis() < time2ignore){
+      double errEnBifurcacion = robot.readErrLineBifurcacion(sig, &bif); //Lee el error de la linea sin verse afectado por las senales
+      robot.setSpeed( VEL_BASE_BIFURCACION - errEnBifurcacion, VEL_BASE_BIFURCACION + errEnBifurcacion );
+    }
+    digitalWrite(Vector9000::LED,LOW);
+    //reset variables
+    sigCont[0]=0;sigCont[1]=0;sigCont[2]=0;
+  }
 }
+/*
+void loop(){
+  int sig=1;
+  boolean bif=false;
+  double errEnBifurcacion = robot.readErrLineBifurcacion(sig, &bif); //Lee el error de la linea sin verse afectado por las senales
+  robot.setSpeed( VEL_BASE_BIFURCACION - errEnBifurcacion, VEL_BASE_BIFURCACION + errEnBifurcacion );
+  if(bif)digitalWrite(Vector9000::LED,HIGH);
+  else digitalWrite(Vector9000::LED,LOW);
+}*/
 
