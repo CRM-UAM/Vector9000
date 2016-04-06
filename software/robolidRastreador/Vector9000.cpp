@@ -80,11 +80,11 @@ void Vector9000::setRSpeed( int s ){
     if(s > 0) {// Hacia delante
         digitalWrite(Vector9000::M_DER_DIR2_PIN, LOW);
         digitalWrite(Vector9000::M_DER_DIR1_PIN, HIGH);
-        analogWrite(Vector9000::M_DER_PWM_PIN , s);
+        if(s<=255)analogWrite(Vector9000::M_DER_PWM_PIN , s);
     }else if(s < 0) {// Hacia atras
         digitalWrite(Vector9000::M_DER_DIR2_PIN, HIGH);
         digitalWrite(Vector9000::M_DER_DIR1_PIN, LOW);
-        analogWrite(Vector9000::M_DER_PWM_PIN , -s);
+        if(-s<=255)analogWrite(Vector9000::M_DER_PWM_PIN , -s);
     }else {//Parado
         digitalWrite(Vector9000::M_DER_PWM_PIN, LOW);// Motor apagado
     }
@@ -94,11 +94,11 @@ void Vector9000::setLSpeed( int s ){
     if(s > 0) {// Hacia delante
         digitalWrite(Vector9000::M_IZQ_DIR2_PIN, LOW);
         digitalWrite(Vector9000::M_IZQ_DIR1_PIN, HIGH);
-        analogWrite(Vector9000::M_IZQ_PWM_PIN , s);
+        if(s<=255)analogWrite(Vector9000::M_IZQ_PWM_PIN , s);
     }else if(s < 0) {// Hacia atras
         digitalWrite(Vector9000::M_IZQ_DIR2_PIN, HIGH);
         digitalWrite(Vector9000::M_IZQ_DIR1_PIN, LOW);
-        analogWrite(Vector9000::M_IZQ_PWM_PIN , -s);
+        if(-s<=255)analogWrite(Vector9000::M_IZQ_PWM_PIN , -s);
     }else {//Parado
         digitalWrite(Vector9000::M_IZQ_PWM_PIN, LOW);// Motor apagado
     }
@@ -248,17 +248,13 @@ int Vector9000::readPosLineWithSignals( int *sig ){
     if(cont_line<=0){
         *sig=0; //no sinales
         if(_last_value < (Vector9000::NUM_IR_SENSORS-1)*1000/2){
-            if( _last_value > 0) _last_value=0;
-            if(_last_value > -MARGEN_ERR_LINEA_NO_DETECTA)_last_value -= INCREMENTO_LINEA_NO_DETECTADA;
-            return _last_value; // If it last read to the left of center, return 0.
+            return 0; // If it last read to the left of center, return 0.
         }
         else{
-            if( _last_value < (Vector9000::NUM_IR_SENSORS-1)*1000) _last_value = (Vector9000::NUM_IR_SENSORS-1)*1000;
-            if(_last_value < (Vector9000::NUM_IR_SENSORS-1)*1000+MARGEN_ERR_LINEA_NO_DETECTA)_last_value += INCREMENTO_LINEA_NO_DETECTADA;
-            return _last_value; // If it last read to the right of center, return the max.
+            return (Vector9000::NUM_IR_SENSORS-1)*1000; // If it last read to the right of center, return the max.
         }
     }else if(cont_line > 1){ //hay mas de una linea, seguir la mas cercana a la detectada anteriormente (_last_value)
-        Serial.println("ALERTA SIGNAL");
+        //Serial.println("ALERTA SIGNAL");
         double min_dist_line=9000;
         int min_ind=0;
         for(j=0;j<cont_line;j++){ //busco la linea que mas cercana esta al _last_value. Esta es la linea a seguir, las demas son señales
@@ -304,15 +300,20 @@ boolean Vector9000::detectarBifurcacion( void ){
     }
     return false;
 }
-
+boolean _previus_bif=false;
 double Vector9000::readErrLineBifurcacion( int sig, boolean *bifurcacion){
     int error = readPosLineBifurcacion(sig, bifurcacion) - (Vector9000::NUM_IR_SENSORS-1)*500; //Centrar el error en el 0
+    if(_previus_bif==false && *bifurcacion==true){
+      error = (error + _lastError)/2;
+    }
+    Serial.print(error);Serial.print(" : ");Serial.print(*bifurcacion);Serial.print(" | ");Serial.println(sig);
     unsigned long currentTime=micros();
     if(currentTime - _lastTimeExec > 1000){//Genero el error derivativo
         _DerivativeErrorTerm = _kd*(error-_lastError)/(currentTime-_lastTimeExec);
         _lastTimeExec = currentTime;
         _lastError = error;
     }
+    _previus_bif=*bifurcacion;
     return _kp*error+_DerivativeErrorTerm;
 }
 
@@ -330,13 +331,11 @@ int Vector9000::readPosLineBifurcacion( int sig, boolean *bifurcacion){
     if(cont_line==0){
         *bifurcacion=false; //no bifurcacion
         if(_last_value < (Vector9000::NUM_IR_SENSORS-1)*1000/2){
-            if( _last_value > 0) _last_value=0;
-             if(_last_value > -MARGEN_ERR_LINEA_NO_DETECTA)_last_value -= INCREMENTO_LINEA_NO_DETECTADA;
-            return _last_value; // If it last read to the left of center, return 0.
+            _last_value=0;
+            return 0; // If it last read to the left of center, return 0.
         }
         else{
-            if( _last_value < (Vector9000::NUM_IR_SENSORS-1)*1000) _last_value = (Vector9000::NUM_IR_SENSORS-1)*1000;
-            if(_last_value < (Vector9000::NUM_IR_SENSORS-1)*1000+MARGEN_ERR_LINEA_NO_DETECTA)_last_value += INCREMENTO_LINEA_NO_DETECTADA;
+            _last_value=(Vector9000::NUM_IR_SENSORS-1)*1000;
             return _last_value; // If it last read to the right of center, return the max.
         }
     }else if(cont_line > 1){ //hay mas de una linea, seguir la que corresponde con la bifurcacion
@@ -358,25 +357,28 @@ int Vector9000::readPosLineBifurcacion( int sig, boolean *bifurcacion){
             return _last_value;
         }
     }else{ //solo una linea para seguir.
-        if(numSensorsOfLine[0]<=2) *bifurcacion=false;
+        if(numSensorsOfLine[0]<=3) *bifurcacion=false;
         else *bifurcacion=true;
         ind_line_viva=0;
     }
 
     double lastPos=(_last_value*1.0f)/1000.0f;
     double dist= abs( lastPos - centerOfLine[ind_line_viva]/numSensorsOfLine[ind_line_viva]);
-    if( dist > lastPos  && (sig==-1 || (lastPos < 1 && sig!=1))){ //realmente la linea mas cercana se ha perdido por el 0
-        if( _last_value > 0) _last_value=0;
-         if(_last_value > -MARGEN_ERR_LINEA_NO_DETECTA)_last_value -= INCREMENTO_LINEA_NO_DETECTADA;
-        return _last_value; // If it last read to the left of center, return 0.
+    
+    if( sig==-1 && dist > 2 && dist > lastPos  /*&& (sig==-1 || (lastPos < 1 && sig!=1))*/){ //realmente la linea mas cercana se ha perdido por el 0
+         *bifurcacion=true;
+         _last_value=0;
+         Serial.print(lastPos);Serial.print(" return 0 ");Serial.println(dist);
+         return _last_value; // If it last read to the left of center, return 0.
     }
-    if( dist > (Vector9000::NUM_IR_SENSORS-1)-lastPos && (sig==1 || (lastPos>(Vector9000::NUM_IR_SENSORS-1) && sig!=-1))){//realmente la linea mas cercana se ha perdido por el 7000
-        if( _last_value < (Vector9000::NUM_IR_SENSORS-1)*1000) _last_value = (Vector9000::NUM_IR_SENSORS-1)*1000;
-        if(_last_value < (Vector9000::NUM_IR_SENSORS-1)*1000+MARGEN_ERR_LINEA_NO_DETECTA)_last_value += INCREMENTO_LINEA_NO_DETECTADA;
+    if( sig==1 && dist > 2 && dist > (Vector9000::NUM_IR_SENSORS-1)-lastPos /*&& (sig==1 || (lastPos>(Vector9000::NUM_IR_SENSORS-1) && sig!=-1))*/){//realmente la linea mas cercana se ha perdido por el 7000
+         *bifurcacion=true;
+         _last_value = (Vector9000::NUM_IR_SENSORS-1)*1000;
+        Serial.print(lastPos);Serial.print(" return 7000 ");Serial.println(dist);
         return _last_value; // If it last read to the right of center, return the max.
     }
     //He limpiado y solo queda una linea, limpio todos los sensores activos menos los dos mas cercanos a donde quiero ir
-    if(numSensorsOfLine[ind_line_viva]>2){
+    if(numSensorsOfLine[ind_line_viva]>3){
         if(sig==1)
             for(i=lines[ind_line_viva];values[i]>300 && numSensorsOfLine[ind_line_viva]>2;i++ , numSensorsOfLine[ind_line_viva]--){
                 values[i]=0;

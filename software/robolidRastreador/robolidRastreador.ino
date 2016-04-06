@@ -2,10 +2,10 @@
 //#include <EnableInterrupt.h>
 #include "Vector9000.h"
 
-#define TIME_IGNORE_AFTER_BIF 750
+#define TIME_IGNORE_AFTER_BIF 200
 #define TIME_IGNORE_AFTER_SIGNAL 50
 
-#define DIF_B_SIGCONT 8
+#define DIF_B_SIGCONT 10
 
 #define PIN_BOTON 7
 
@@ -15,16 +15,13 @@
 #define TICK_ENC_MAX_RECTA 500 //ticks máximos que dura la recta antes de frenar. 50ticks por vuelta de rueda.
 #define TICK_ENC_MAX_FRENADA 100 //ticks máximos que dura la frenada
 
-#define INTERVAL_RECT_TASK 500
-#define VEL_BASE_RECTA (40+5)
-#define VEL_BASE_CURVA (35+5)
-#define VEL_BASE_FRENO (32+5)
-int VEL_BASE=40+5;
-#define TIME_CHECK_SIG 50 //tiempo en ms para volver a checkear si la senal leida se mantiene
-#define VEL_BASE_PRE_INTERSECCION (40+5)
-#define VEL_BASE_BIFURCACION (34+5)
 
-Vector9000 robot = Vector9000(0.04,4000.283,0);//(kp,kd, ki);
+int VEL_BASE=80;//50+5;
+#define TIME_CHECK_SIG 50 //tiempo en ms para volver a checkear si la senal leida se mantiene
+#define VEL_BASE_PRE_INTERSECCION 30//(40+5)
+#define VEL_BASE_BIFURCACION 25//(34+5)
+
+Vector9000 robot = Vector9000(0.04,3800.283,0);//(kp,kd, ki);
 
 
 boolean schedulerVELBASEOn=false;
@@ -62,11 +59,12 @@ bool boton_pulsado() {
 void setup(){
     robot.config();
     Serial.begin(19200);
+    robot.setSpeed( 0,0 );
     pinMode(PIN_BOTON, INPUT_PULLUP);
     delay(20);
     robot.calibrateIR( 5, true );
     while(!boton_pulsado()) delay(10);
-    delay(100);
+    while(boton_pulsado()) delay(10);
 }
 
 long sumErr=0;
@@ -80,32 +78,7 @@ inline double PID(int errLine){
   return pid;
 }
 
-void inline activarCurvas(){
-  VEL_BASE=VEL_BASE_CURVA;
-  schedulerVELBASEOn=false;
-}
-void inline activarFreno(){
-  VEL_BASE= VEL_BASE_FRENO;
 
-  //Configurar duracion de frenada
-  schedulerVELBASEOn=true;
-  callback=&activarCurvas;
-  nextTaskTime=millis()+TIME_MAX_FRENADA;
-  nextEndDerTaskCount=robot.cuentaEncoderDerecho+TICK_ENC_MAX_FRENADA;
-  nextEndIzqTaskCount=robot.cuentaEncoderIzquierdo+TICK_ENC_MAX_FRENADA;
-}
-
-void inline activarRecta(){
-  enRecta=true;
-  VEL_BASE= VEL_BASE_RECTA;
-
-  //Configurar el punto de frenada
-  schedulerVELBASEOn=true;
-  callback=&activarFreno;
-  nextTaskTime=millis()+TIME_MAX_IN_RECTA;
-  nextEndDerTaskCount=robot.cuentaEncoderDerecho+TICK_ENC_MAX_RECTA;
-  nextEndIzqTaskCount=robot.cuentaEncoderIzquierdo+TICK_ENC_MAX_RECTA;
-}
 
 /*unsigned long timeUltimaSig=0;
 int sig=0;
@@ -136,6 +109,7 @@ void loop() {
 }*/
 unsigned int sigCont[3]={0};
 void loop(){
+  //if(boton_pulsado())setup();
   int sig=0;
   double errDif = robot.readErrLineWithSignals( &sig );
   robot.setSpeed( VEL_BASE - errDif, VEL_BASE + errDif );
@@ -163,18 +137,18 @@ void loop(){
       robot.setSpeed( VEL_BASE_PRE_INTERSECCION - errDif2, VEL_BASE_PRE_INTERSECCION + errDif2 );
       if(sig2null==0)sigcont0++;
     }
-    digitalWrite(Vector9000::LED,LOW);
+    digitalWrite(Vector9000::LED,HIGH);
     boolean bif=false;
     while(!bif){
       double errEnBifurcacion = robot.readErrLineBifurcacion(sig, &bif); //Lee el error de la linea sin verse afectado por las senales
-      robot.setSpeed( VEL_BASE_BIFURCACION - errEnBifurcacion, VEL_BASE_BIFURCACION + errEnBifurcacion );
-      Serial.println(bif);
+      robot.setSpeed( VEL_BASE_BIFURCACION-2 - errEnBifurcacion, VEL_BASE_BIFURCACION-2 + errEnBifurcacion );
+      
     }
     digitalWrite(Vector9000::LED,HIGH);
     unsigned long time2ignore=millis()+TIME_IGNORE_AFTER_BIF;
     while(millis() < time2ignore){
       double errEnBifurcacion = robot.readErrLineBifurcacion(sig, &bif); //Lee el error de la linea sin verse afectado por las senales
-      robot.setSpeed( VEL_BASE_BIFURCACION - errEnBifurcacion, VEL_BASE_BIFURCACION + errEnBifurcacion );
+      robot.setSpeed( VEL_BASE_BIFURCACION+2 - errEnBifurcacion, VEL_BASE_BIFURCACION+2 + errEnBifurcacion );
     }
     digitalWrite(Vector9000::LED,LOW);
     //reset variables

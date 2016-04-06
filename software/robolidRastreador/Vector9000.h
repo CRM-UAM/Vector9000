@@ -13,8 +13,8 @@
 //#include "EnableInterrupt.h"
 #define EI_ARDUINO_INTERRUPTED_PIN
 
-#define INCREMENTO_LINEA_NO_DETECTADA 1 //se suma o se resta esta cantidad cada vez que se lee la linea y no se encuentra en los sensores, si se pierde la linea por la izq se va decrementando 0,-1,-2,....
-#define MARGEN_ERR_LINEA_NO_DETECTA 300 //margen maximo por debajo de 0 o por encima de 7000 al que puede llegar si se pierde la linea mucho tiempo
+#define INCREMENTO_LINEA_NO_DETECTADA 0 //se suma o se resta esta cantidad cada vez que se lee la linea y no se encuentra en los sensores, si se pierde la linea por la izq se va decrementando 0,-1,-2,....
+#define MARGEN_ERR_LINEA_NO_DETECTA 0 //margen maximo por debajo de 0 o por encima de 7000 al que puede llegar si se pierde la linea mucho tiempo
 class Vector9000
 {
   public:
