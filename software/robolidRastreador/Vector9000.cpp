@@ -6,7 +6,7 @@
 
 #include "Vector9000.h"
 #include <QTRSensors.h>
-#include "EnableInterrupt.h"
+//#include "EnableInterrupt.h"
 
 
 const uint8_t Vector9000::M_IZQ_PWM_PIN = 5;
@@ -19,13 +19,13 @@ const uint8_t Vector9000::LED = 13;
 const uint8_t Vector9000::NUM_IR_SENSORS = 8;
 const int Vector9000::TIMEOUT = 2000;
 
-const uint8_t Vector9000::IR1 = 8;
-const uint8_t Vector9000::IR2 = 4;
-const uint8_t Vector9000::IR3 = 3;
-const uint8_t Vector9000::IR4 = 2;
-const uint8_t Vector9000::IR5 = A1;
-const uint8_t Vector9000::IR6 = 7;
-const uint8_t Vector9000::IR7 = A2;
+const uint8_t Vector9000::IR1 = 4;
+const uint8_t Vector9000::IR2 = 8;
+const uint8_t Vector9000::IR3 = A5;
+const uint8_t Vector9000::IR4 = A4;
+const uint8_t Vector9000::IR5 = A3;
+const uint8_t Vector9000::IR6 = A2;
+const uint8_t Vector9000::IR7 = A1;
 const uint8_t Vector9000::IR8 = A0;
 
 // FIXME: colocar los pines de los encoders correctos

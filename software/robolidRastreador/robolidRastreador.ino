@@ -1,11 +1,13 @@
 #include <Arduino.h>
-#include <EnableInterrupt.h>
+//#include <EnableInterrupt.h>
 #include "Vector9000.h"
 
 #define TIME_IGNORE_AFTER_BIF 750
 #define TIME_IGNORE_AFTER_SIGNAL 50
 
 #define DIF_B_SIGCONT 8
+
+#define PIN_BOTON 7
 
 #define DIFF_ENCODERS_RECT 50
 #define TIME_MAX_IN_RECTA 2000 //tiempo máximo que está el robot en recta antes de frena. En ms.
@@ -14,13 +16,13 @@
 #define TICK_ENC_MAX_FRENADA 100 //ticks máximos que dura la frenada
 
 #define INTERVAL_RECT_TASK 500
-#define VEL_BASE_RECTA 50
-#define VEL_BASE_CURVA 45
-#define VEL_BASE_FRENO 42
-int VEL_BASE=50;
+#define VEL_BASE_RECTA (40+5)
+#define VEL_BASE_CURVA (35+5)
+#define VEL_BASE_FRENO (32+5)
+int VEL_BASE=40+5;
 #define TIME_CHECK_SIG 50 //tiempo en ms para volver a checkear si la senal leida se mantiene
-#define VEL_BASE_PRE_INTERSECCION 50
-#define VEL_BASE_BIFURCACION 44
+#define VEL_BASE_PRE_INTERSECCION (40+5)
+#define VEL_BASE_BIFURCACION (34+5)
 
 Vector9000 robot = Vector9000(0.04,4000.283,0);//(kp,kd, ki);
 
@@ -52,12 +54,19 @@ void printTelemetria(float err){
     Serial.println(robot._ki);
 }
 
+bool boton_pulsado() {
+  return !digitalRead(PIN_BOTON);
+}
+
 
 void setup(){
     robot.config();
     Serial.begin(19200);
+    pinMode(PIN_BOTON, INPUT_PULLUP);
     delay(20);
-    robot.calibrateIR( 5, false );
+    robot.calibrateIR( 5, true );
+    while(!boton_pulsado()) delay(10);
+    delay(100);
 }
 
 long sumErr=0;

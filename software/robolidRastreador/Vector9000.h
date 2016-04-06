@@ -10,7 +10,7 @@
 
 #include "Arduino.h"
 #include <stdint.h>
-#include "EnableInterrupt.h"
+//#include "EnableInterrupt.h"
 #define EI_ARDUINO_INTERRUPTED_PIN
 
 #define INCREMENTO_LINEA_NO_DETECTADA 1 //se suma o se resta esta cantidad cada vez que se lee la linea y no se encuentra en los sensores, si se pierde la linea por la izq se va decrementando 0,-1,-2,....
