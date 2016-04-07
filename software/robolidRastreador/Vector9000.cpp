@@ -6,7 +6,6 @@
 
 #include "Vector9000.h"
 #include <QTRSensors.h>
-//#include "EnableInterrupt.h"
 
 
 const uint8_t Vector9000::M_IZQ_PWM_PIN = 5;
@@ -192,7 +191,13 @@ int calcularMediaSensores(unsigned int *values){
     }
     //Serial.println("");
     //Serial.print("savg=");Serial.print(avg);Serial.print("sum=");SSerial.println(sum);
-    return avg/sum;
+    if(sum==0){
+      Serial.println("\n\nERROR!!!! RUN TIME ERROR division by 0 variable sum\n\n");
+      return 0;
+    }else{
+      return avg/sum; 
+    }
+    
 }
 
 int readMultipleLines(unsigned int *values, int *lines, float *centerOfLine, float *numSensorsOfLine){
@@ -226,11 +231,11 @@ int readMultipleLines(unsigned int *values, int *lines, float *centerOfLine, flo
  */
 int Vector9000::readPosLineWithSignals( int *sig ){
     int i,j,h;
-    unsigned int values[Vector9000::NUM_IR_SENSORS];
+    unsigned int values[Vector9000::NUM_IR_SENSORS+1];
     //static int _last_value=0; // assume initially that the line is left.
-    int lines[5]={0};
-    float centerOfLine[5]={0};
-    float numSensorsOfLine[5]={0};
+    int lines[10]={0};
+    float centerOfLine[10]={0};
+    float numSensorsOfLine[10]={0};
 
     int cont_line = readMultipleLines(values, lines,centerOfLine,numSensorsOfLine);
 
@@ -246,7 +251,7 @@ int Vector9000::readPosLineWithSignals( int *sig ){
     Serial.println("");*/
 
     if(cont_line<=0){
-        *sig=0; //no sinales
+        *sig=NOSIG; //no sinales
         if(_last_value < (Vector9000::NUM_IR_SENSORS-1)*1000/2){
             return 0; // If it last read to the left of center, return 0.
         }
@@ -258,16 +263,21 @@ int Vector9000::readPosLineWithSignals( int *sig ){
         double min_dist_line=9000;
         int min_ind=0;
         for(j=0;j<cont_line;j++){ //busco la linea que mas cercana esta al _last_value. Esta es la linea a seguir, las demas son señales
-            double dist= abs( (_last_value*1.0f)/1000.0f - centerOfLine[j]/numSensorsOfLine[j]);
-            if(dist<min_dist_line){
-                min_dist_line=dist;
-                min_ind=j;
+            if(numSensorsOfLine[j]<=0){
+              Serial.println("\n\nERROR!!!!! RUN TIME ERROR division by 0 variable numSensorsOfLine\n\n");
+            }else{
+              double dist= abs( (_last_value*1.0f)/1000.0f - centerOfLine[j]/numSensorsOfLine[j]);
+              if(dist<min_dist_line){
+                  min_dist_line=dist;
+                  min_ind=j;
+              }
             }
+            
         }
-        if(min_ind==0) *sig=1; //linea elegida para seguir a la izq por tanto senal a la derecha
-        else if(min_ind==1 && cont_line==2) *sig=-1; //linea elegida para seguir a la der por tanto senal a la izq
-        else if(min_ind==1 && cont_line==3) *sig=2; //linea elegida para seguir en el centro y con dos senales a los lados
-        else *sig=-10; //formato de signales detactado erroneo
+        if(min_ind==0) *sig=SIG_DER; //linea elegida para seguir a la izq por tanto senal a la derecha
+        else if(min_ind==1 && cont_line==2) *sig=SIG_IZQ; //linea elegida para seguir a la der por tanto senal a la izq
+        else if(min_ind==1 && cont_line==3) *sig=SIG_DOUBLE; //linea elegida para seguir en el centro y con dos senales a los lados
+        else *sig=NOSIG; //formato de signales detactado erroneo
         //Serial.print(">>min_dis=");Serial.print(min_dist_line);Serial.print("  ind_min=");Serial.println(min_ind);
         //pongo a 0 los sensores activos que no han sido elegidos como la linea a seguir
 
@@ -278,7 +288,7 @@ int Vector9000::readPosLineWithSignals( int *sig ){
         }
 
     }else{
-        *sig=0; //no signales solo una linea para seguir
+        *sig=NOSIG; //no signales solo una linea para seguir
     }
 
     _last_value = calcularMediaSensores(values);
@@ -304,9 +314,9 @@ boolean _previus_bif=false;
 double Vector9000::readErrLineBifurcacion( int sig, boolean *bifurcacion){
     int error = readPosLineBifurcacion(sig, bifurcacion) - (Vector9000::NUM_IR_SENSORS-1)*500; //Centrar el error en el 0
     if(_previus_bif==false && *bifurcacion==true){
-      error = (error + _lastError)/2;
+      error = (error + error + _lastError)/3;
     }
-    Serial.print(error);Serial.print(" : ");Serial.print(*bifurcacion);Serial.print(" | ");Serial.println(sig);
+    //Serial.print(error);Serial.print(" : ");Serial.print(*bifurcacion);Serial.print(" | ");Serial.println(sig);
     unsigned long currentTime=micros();
     if(currentTime - _lastTimeExec > 1000){//Genero el error derivativo
         _DerivativeErrorTerm = _kd*(error-_lastError)/(currentTime-_lastTimeExec);
@@ -321,9 +331,9 @@ int Vector9000::readPosLineBifurcacion( int sig, boolean *bifurcacion){
     int i,j;
     unsigned int values[Vector9000::NUM_IR_SENSORS];
     //static int _last_value=0; // assume initially that the line is left.
-    int lines[5]={0};
-    float centerOfLine[5]={0};
-    float numSensorsOfLine[5]={0};
+    int lines[10]={0};
+    float centerOfLine[10]={0};
+    float numSensorsOfLine[10]={0};
 
     int cont_line = readMultipleLines(values, lines, centerOfLine, numSensorsOfLine);
 
@@ -340,19 +350,19 @@ int Vector9000::readPosLineBifurcacion( int sig, boolean *bifurcacion){
         }
     }else if(cont_line > 1){ //hay mas de una linea, seguir la que corresponde con la bifurcacion
         *bifurcacion=true; // bifurcacion
-        if(sig==1){ // quiero girar a la derecha limpio todas menos la ultima linea
+        if(sig==SIG_DER){ // quiero girar a la derecha limpio todas menos la ultima linea
             for(i=0;i<cont_line-1;i++){
                 for(j=lines[i];values[j]>300;j++)
                     values[j]=0;
             }
             ind_line_viva=cont_line-1;
-        }else if(sig==-1){ // quiero girar a la izq limpio todas menos la primera linea
+        }else if(sig==SIG_IZQ){ // quiero girar a la izq limpio todas menos la primera linea
             for(i=1;i<cont_line;i++){
                 for(j=lines[i];values[j]>300;j++)
                     values[j]=0;
             }
             ind_line_viva=0;
-        }else if(sig==2){ //quiero seguir defrente
+        }else if(sig==SIG_DOUBLE){ //quiero seguir defrente
             _last_value= (Vector9000::NUM_IR_SENSORS-1)*1000 / 2; //seguir de frente posicion  de linea centrada
             return _last_value;
         }
@@ -363,15 +373,20 @@ int Vector9000::readPosLineBifurcacion( int sig, boolean *bifurcacion){
     }
 
     double lastPos=(_last_value*1.0f)/1000.0f;
-    double dist= abs( lastPos - centerOfLine[ind_line_viva]/numSensorsOfLine[ind_line_viva]);
+     double dist=0;
+    if(numSensorsOfLine[ind_line_viva]==0){
+      Serial.println("\n\nERROR RUN TIME ERROR division by 0 variable numSensorsOfLine[ind_line_viva]\n\n");
+    }else{
+      dist= abs( lastPos - centerOfLine[ind_line_viva]/numSensorsOfLine[ind_line_viva]);
+    }
     
-    if( sig==-1 && dist > 2 && dist > lastPos  /*&& (sig==-1 || (lastPos < 1 && sig!=1))*/){ //realmente la linea mas cercana se ha perdido por el 0
+    if( sig==SIG_IZQ && dist > 1.8 && dist > lastPos  /*&& (sig==-1 || (lastPos < 1 && sig!=1))*/){ //realmente la linea mas cercana se ha perdido por el 0
          *bifurcacion=true;
          _last_value=0;
          Serial.print(lastPos);Serial.print(" return 0 ");Serial.println(dist);
          return _last_value; // If it last read to the left of center, return 0.
     }
-    if( sig==1 && dist > 2 && dist > (Vector9000::NUM_IR_SENSORS-1)-lastPos /*&& (sig==1 || (lastPos>(Vector9000::NUM_IR_SENSORS-1) && sig!=-1))*/){//realmente la linea mas cercana se ha perdido por el 7000
+    if( sig==SIG_DER && dist > 1.8 && dist > (Vector9000::NUM_IR_SENSORS-1)-lastPos /*&& (sig==1 || (lastPos>(Vector9000::NUM_IR_SENSORS-1) && sig!=-1))*/){//realmente la linea mas cercana se ha perdido por el 7000
          *bifurcacion=true;
          _last_value = (Vector9000::NUM_IR_SENSORS-1)*1000;
         Serial.print(lastPos);Serial.print(" return 7000 ");Serial.println(dist);
@@ -379,12 +394,12 @@ int Vector9000::readPosLineBifurcacion( int sig, boolean *bifurcacion){
     }
     //He limpiado y solo queda una linea, limpio todos los sensores activos menos los dos mas cercanos a donde quiero ir
     if(numSensorsOfLine[ind_line_viva]>3){
-        if(sig==1)
-            for(i=lines[ind_line_viva];values[i]>300 && numSensorsOfLine[ind_line_viva]>2;i++ , numSensorsOfLine[ind_line_viva]--){
+        if(sig==SIG_DER)
+            for(i=lines[ind_line_viva];values[i]>300 && numSensorsOfLine[ind_line_viva]>3;i++ , numSensorsOfLine[ind_line_viva]--){
                 values[i]=0;
             }
-        else if(sig==-1)
-            for(i=lines[ind_line_viva]+2;values[i]>300 && numSensorsOfLine[ind_line_viva]>2;i++ , numSensorsOfLine[ind_line_viva]--){
+        else if(sig==SIG_IZQ)
+            for(i=lines[ind_line_viva]+2;values[i]>300 && numSensorsOfLine[ind_line_viva]>3;i++ , numSensorsOfLine[ind_line_viva]--){
                 values[i]=0;
             }
         else{} //Si sig=2 (seguir de frente) no limpio sensores ya que luego coge la media
