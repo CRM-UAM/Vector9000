@@ -387,13 +387,13 @@ int Vector9000::readPosLineBifurcacion( int sig, boolean *bifurcacion){
       dist= abs( lastPos - centerOfLine[ind_line_viva]/numSensorsOfLine[ind_line_viva]);
     }
     
-    if( sig==SIG_IZQ && dist > 2 && dist > lastPos  /*&& (sig==-1 || (lastPos < 1 && sig!=1))*/){ //realmente la linea mas cercana se ha perdido por el 0
+    if( sig==SIG_IZQ && dist > 1 && dist > lastPos  /*&& (sig==-1 || (lastPos < 1 && sig!=1))*/){ //realmente la linea mas cercana se ha perdido por el 0
          *bifurcacion=true;
          _last_value=0;
          Serial.print(lastPos);Serial.print(" return 0 ");Serial.println(dist);
          return _last_value; // If it last read to the left of center, return 0.
     }
-    if( sig==SIG_DER && dist > 2 && dist > (Vector9000::NUM_IR_SENSORS-1)-lastPos /*&& (sig==1 || (lastPos>(Vector9000::NUM_IR_SENSORS-1) && sig!=-1))*/){//realmente la linea mas cercana se ha perdido por el 7000
+    if( sig==SIG_DER && dist > 1 && dist > (Vector9000::NUM_IR_SENSORS-1)-lastPos /*&& (sig==1 || (lastPos>(Vector9000::NUM_IR_SENSORS-1) && sig!=-1))*/){//realmente la linea mas cercana se ha perdido por el 7000
          *bifurcacion=true;
          _last_value = (Vector9000::NUM_IR_SENSORS-1)*1000;
         Serial.print(lastPos);Serial.print(" return 7000 ");Serial.println(dist);

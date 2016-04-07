@@ -11,9 +11,9 @@
 
 
 int VEL_BASE=60;//50+5;
-int VEL_BASE_IN_SIGNAL=-10;//(40+5)
-int VEL_BASE_POST_BIFURCACION=15;//(34+5)
-int VEL_BASE_PRE_BIFURCACION=10;//(34+5)
+int VEL_BASE_IN_SIGNAL=30;//(40+5)
+int VEL_BASE_POST_BIFURCACION=40;//(34+5)
+int VEL_BASE_PRE_BIFURCACION=40;//(34+5)
 
 Vector9000 robot = Vector9000(0.04,3800.283,0);//(kp,kd, ki);
 
@@ -115,7 +115,7 @@ void loop(){
     //robot.setP(0.032);
     digitalWrite(Vector9000::LED,HIGH);
     unsigned long time2ignore=millis()+TIME_IGNORE_AFTER_BIF;
-    while(millis() < time2ignore){
+    while(millis() < time2ignore || bif){
       double errEnBifurcacion = robot.readErrLineBifurcacion(sig, &bif); //Lee el error de la linea sin verse afectado por las senales
       //printTelemetria(robot._last_value);
       robot.setSpeed( VEL_BASE_POST_BIFURCACION - errEnBifurcacion, VEL_BASE_POST_BIFURCACION + errEnBifurcacion );
