@@ -98,11 +98,13 @@ class Vector9000
     double _ki;
     unsigned long cuentaEncoderIzquierdo;
     unsigned long cuentaEncoderDerecho;
+    
   private:
+    int _last_value;
     double _DerivativeErrorTerm;
     unsigned long _lastTimeExec;
     int _lastError;
-    int _last_value;
+    
 
 
 
@@ -127,6 +129,7 @@ inline void Vector9000::setD( double KD){
 inline void Vector9000::setSpeed( int lSpeed, int rSpeed ){
     setRSpeed( rSpeed );
     setLSpeed( lSpeed);
+    //if(digitalRead(7)==LOW)setup();
  }
 
 inline void Vector9000::ledOn( void ){

@@ -7,7 +7,6 @@
 #include "Vector9000.h"
 #include <QTRSensors.h>
 
-
 const uint8_t Vector9000::M_IZQ_PWM_PIN = 5;
 const uint8_t Vector9000::M_IZQ_DIR1_PIN = 10;
 const uint8_t Vector9000::M_IZQ_DIR2_PIN = 12;
@@ -85,7 +84,7 @@ void Vector9000::setRSpeed( int s ){
         digitalWrite(Vector9000::M_DER_DIR1_PIN, LOW);
         if(-s<=255)analogWrite(Vector9000::M_DER_PWM_PIN , -s);
     }else {//Parado
-        digitalWrite(Vector9000::M_DER_PWM_PIN, LOW);// Motor apagado
+        analogWrite(Vector9000::M_DER_PWM_PIN, 0);// Motor apagado
     }
 }
 
@@ -99,7 +98,7 @@ void Vector9000::setLSpeed( int s ){
         digitalWrite(Vector9000::M_IZQ_DIR1_PIN, LOW);
         if(-s<=255)analogWrite(Vector9000::M_IZQ_PWM_PIN , -s);
     }else {//Parado
-        digitalWrite(Vector9000::M_IZQ_PWM_PIN, LOW);// Motor apagado
+        analogWrite(Vector9000::M_IZQ_PWM_PIN, 0);// Motor apagado
     }
 }
 
@@ -200,9 +199,17 @@ int calcularMediaSensores(unsigned int *values){
     
 }
 
+unsigned int values_filtrados[Vector9000::NUM_IR_SENSORS] = {0};
+
 int readMultipleLines(unsigned int *values, int *lines, float *centerOfLine, float *numSensorsOfLine){
     int i,j;
-    qtrrc.readCalibrated(values);
+    unsigned int values_raw[Vector9000::NUM_IR_SENSORS];
+    qtrrc.readCalibrated(values_raw);
+    for(i=0; i<Vector9000::NUM_IR_SENSORS; i++) {
+      values_filtrados[i] = values_filtrados[i]*0.6 + values_raw[i]*0.4;
+      values[i] = values_filtrados[i];
+    }
+    
     int cont_line=-1;
     int lastValueSensor=0;
     //Serial.print("D -> ");
@@ -211,7 +218,7 @@ int readMultipleLines(unsigned int *values, int *lines, float *centerOfLine, flo
         //Serial.print(" ");
         //Serial.print(value);
         if(value > 300){
-            if(lastValueSensor<300){
+            if(lastValueSensor<=300){
                 lines[++cont_line]=i;
             }
             centerOfLine[cont_line]+=i;
@@ -298,9 +305,9 @@ int Vector9000::readPosLineWithSignals( int *sig ){
 boolean Vector9000::detectarBifurcacion( void ){
     int i;
     unsigned int values[Vector9000::NUM_IR_SENSORS];
-    int lines[5]={0};
-    float centerOfLine[5]={0};
-    float numSensorsOfLine[5]={0};
+    int lines[10]={0};
+    float centerOfLine[10]={0};
+    float numSensorsOfLine[10]={0};
     int cont_line = readMultipleLines(values, lines, centerOfLine, numSensorsOfLine);
     if(cont_line > 1) return true;
 
@@ -314,7 +321,7 @@ boolean _previus_bif=false;
 double Vector9000::readErrLineBifurcacion( int sig, boolean *bifurcacion){
     int error = readPosLineBifurcacion(sig, bifurcacion) - (Vector9000::NUM_IR_SENSORS-1)*500; //Centrar el error en el 0
     if(_previus_bif==false && *bifurcacion==true){
-      error = (error + error + _lastError)/3;
+      error = (error + _lastError)/2;
     }
     //Serial.print(error);Serial.print(" : ");Serial.print(*bifurcacion);Serial.print(" | ");Serial.println(sig);
     unsigned long currentTime=micros();
@@ -380,13 +387,13 @@ int Vector9000::readPosLineBifurcacion( int sig, boolean *bifurcacion){
       dist= abs( lastPos - centerOfLine[ind_line_viva]/numSensorsOfLine[ind_line_viva]);
     }
     
-    if( sig==SIG_IZQ && dist > 1.8 && dist > lastPos  /*&& (sig==-1 || (lastPos < 1 && sig!=1))*/){ //realmente la linea mas cercana se ha perdido por el 0
+    if( sig==SIG_IZQ && dist > 2 && dist > lastPos  /*&& (sig==-1 || (lastPos < 1 && sig!=1))*/){ //realmente la linea mas cercana se ha perdido por el 0
          *bifurcacion=true;
          _last_value=0;
          Serial.print(lastPos);Serial.print(" return 0 ");Serial.println(dist);
          return _last_value; // If it last read to the left of center, return 0.
     }
-    if( sig==SIG_DER && dist > 1.8 && dist > (Vector9000::NUM_IR_SENSORS-1)-lastPos /*&& (sig==1 || (lastPos>(Vector9000::NUM_IR_SENSORS-1) && sig!=-1))*/){//realmente la linea mas cercana se ha perdido por el 7000
+    if( sig==SIG_DER && dist > 2 && dist > (Vector9000::NUM_IR_SENSORS-1)-lastPos /*&& (sig==1 || (lastPos>(Vector9000::NUM_IR_SENSORS-1) && sig!=-1))*/){//realmente la linea mas cercana se ha perdido por el 7000
          *bifurcacion=true;
          _last_value = (Vector9000::NUM_IR_SENSORS-1)*1000;
         Serial.print(lastPos);Serial.print(" return 7000 ");Serial.println(dist);
