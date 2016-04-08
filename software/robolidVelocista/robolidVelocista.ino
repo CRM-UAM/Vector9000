@@ -5,19 +5,19 @@
 #define PIN_BOTON 7
 
 #define DIFF_ENCODERS_RECT 10
-#define TIME_MAX_IN_RECTA 500 //tiempo máximo que está el robot en recta antes de frena. En ms.
+#define TIME_MAX_IN_RECTA 600 //tiempo máximo que está el robot en recta antes de frena. En ms.
 #define TIME_MAX_FRENADA 100 //tiempo maximo de duracion de frenada tras recta
 #define TICK_ENC_MAX_RECTA 500 //ticks máximos que dura la recta antes de frenar. 50ticks por vuelta de rueda.
 #define TICK_ENC_MAX_FRENADA 100 //ticks máximos que dura la frenada
 
 #define INTERVAL_RECT_TASK 100
-#define MIN_VEL_EN_RECTA 100
+#define MIN_VEL_EN_RECTA 120
 
 
-#define VEL_BASE_RECTA 70
-#define VEL_BASE_CURVA 50
+#define VEL_BASE_RECTA 115
+#define VEL_BASE_CURVA 95
 #define VEL_BASE_FRENO 0
-int VEL_BASE=65;
+int VEL_BASE=95;
 Vector9000 robot = Vector9000(0.0481,2750.283,0);//(kp,kd, ki);
 
 
