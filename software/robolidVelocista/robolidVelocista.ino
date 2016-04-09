@@ -7,18 +7,19 @@
 #define DIFF_ENCODERS_RECT 13
 #define TIME_MAX_IN_RECTA 600 //tiempo máximo que está el robot en recta antes de frena. En ms.
 #define TIME_MAX_FRENADA 30 //tiempo maximo de duracion de frenada tras recta
+#define TIME_MAX_PUENTE 100 //tiempo maximo de duracion de frenada tras recta
 #define TICK_ENC_MAX_RECTA 500 //ticks máximos que dura la recta antes de frenar. 50ticks por vuelta de rueda.
 #define TICK_ENC_MAX_FRENADA 100 //ticks máximos que dura la frenada
 
 #define INTERVAL_RECT_TASK 100
-#define MIN_VEL_EN_RECTA 120
+#define MIN_VEL_EN_RECTA 225
 
-
-#define VEL_BASE_RECTA 155
-#define VEL_BASE_CURVA 105
-#define VEL_BASE_FRENO -30
+#define VEL_BASE_PUENTE 0
+#define VEL_BASE_RECTA 120
+#define VEL_BASE_CURVA 110
+#define VEL_BASE_FRENO -45
 int VEL_BASE=105;
-Vector9000 robot = Vector9000(0.0481,2750.283,0);//(kp,kd, ki);
+Vector9000 robot = Vector9000(0.0491,2950.283,0);//(kp,kd, ki);
 
 
 boolean schedulerVELBASEOn=false;
@@ -77,6 +78,8 @@ void setup(){
     
     attachInterrupt(digitalPinToInterrupt(Vector9000::ENC_DER_PIN), aumentarCuentaDerecha, CHANGE); 
     attachInterrupt(digitalPinToInterrupt(Vector9000::ENC_IZQ_PIN), aumentarCuentaIzquierda, CHANGE);
+
+    delay(4975);
 }
 
 long sumErr=0;
@@ -120,6 +123,15 @@ void inline activarRecta(){
   //nextEndIzqTaskCount=cuentaEncoderIzquierdo+TICK_ENC_MAX_RECTA;
 }
 
+void inline activarPuente(){
+  enRecta=false;
+  VEL_BASE=VEL_BASE_PUENTE;
+  robot.config();
+  //Configurar duracion de frenada
+  schedulerVELBASEOn=true;
+  callback=&activarCurvas;
+  nextTaskTime=millis()+TIME_MAX_PUENTE;
+}
 
 
 void loop() {
@@ -144,6 +156,7 @@ void loop() {
       nextCheckRectTask=millis()+INTERVAL_RECT_TASK;
       unsigned long velIzq=(cuentaEncoderIzquierdo-lastEncIzq);
       unsigned long velDer=(cuentaEncoderDerecho-lastEncDer);
+      
       long diferencia = (velIzq > velDer) ? (velIzq - velDer) : (velDer - velIzq);
       if( diferencia < DIFF_ENCODERS_RECT && velIzq > MIN_VEL_EN_RECTA){
         activarRecta();
@@ -158,9 +171,13 @@ void loop() {
         robot.ledOff();
         contRecta=0;
       }
+      if(velDer > 260 || velIzq >260){
+        activarPuente();
+      }
       lastEncIzq = cuentaEncoderIzquierdo;
       lastEncDer = cuentaEncoderDerecho;
-      Serial.print(millis());Serial.print(" ");Serial.print(velDer);Serial.print("  ");Serial.print(velIzq);Serial.print("  "); Serial.print(diferencia);Serial.print("  "); Serial.println(enRecta*100);
+      //long cuenta = cuentaEncoderIzquierdo - cuentaEncoderDerecho;
+      //Serial.print(millis());Serial.print(" ");Serial.print(velDer);Serial.print("  ");Serial.print(velIzq);Serial.print("  "); Serial.print(diferencia);Serial.print("  "); Serial.print(enRecta*100);Serial.print("  "); Serial.println(cuenta);
     }
     
 }
