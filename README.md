@@ -2,7 +2,7 @@ Vector-9000, a fast line follower robot
 ===============
 
 
-![Image](img/2013_Vector-9000.jpg)
+![Image](/home/carlosgs/GitRepos/CRM/Vector9000/img/vector9000_v3.jpg)
 
 Description
 --------
@@ -36,6 +36,13 @@ Files
 
 [![Image](img/CubiertaPololu_preview_tinycard.jpg)](C3D_design/ubiertaPololu.stl)
  [ CubiertaPololu.stl](3D_design/CubiertaPololu.stl)  
+ 
+ 
+ Original design as of 2013:
+![Image](img/2013_Vector-9000.jpg)
+
+License: CC-BY-SA 4.0 international
+
 
 [![Image](img/Gears_preview_tinycard.jpg)](3D_design/TercerApoyo.scad)
  [ TercerApoyo.scad](3D_design/TercerApoyo.scad)  
