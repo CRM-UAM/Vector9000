@@ -138,28 +138,34 @@ void calculateMotorPwm(void) // encoder PD controller
 {
 
   
-  
+ 
     posErrorL += curSpeedL - leftEncoderChange;
     posErrorR += curSpeedR - rightEncoderChange;
    
 
 
-    Serial.print("Time: ");
-    Serial.println(micros());
-    Serial.print("SppedL: ");
-    Serial.println(curSpeedL);
-    Serial.print("SppedR: ");
-    Serial.println(curSpeedR);
-    Serial.print("EncoderFedbackL: ");
-    Serial.println(leftEncoderChange);
-    Serial.print("EncoderFedbackR: ");
-    Serial.println(rightEncoderChange);
+//    Serial.print("Time: ");
+//    Serial.println(micros());
+//    Serial.print("SppedL: ");
+//    Serial.println(curSpeedL);
+//    Serial.print("SppedR: ");
+//    Serial.println(curSpeedR);
+//    Serial.print("EncoderFedbackL: ");
+//    Serial.println(leftEncoderChange);
+//    Serial.print("EncoderFedbackR: ");
+//    Serial.println(rightEncoderChange);
     
 
 
-
-    posPwmL = kpL * posErrorL + kdL * (posErrorL - oldPosErrorL);
-    posPwmR = kpR * posErrorR + kdR * (posErrorR - oldPosErrorR); 
+    if(curSpeedL > 0)
+      posPwmL = kpL * posErrorL + kdL * (posErrorL - oldPosErrorL);
+    else
+      posPwmL = kpL/2 * curSpeedL;
+    if(curSpeedR > 0)
+      posPwmR = kpR * posErrorR + kdR * (posErrorR - oldPosErrorR);
+    else
+      posPwmR= kpR/2 * curSpeedR;
+    
 
 //    Serial.print("OutputSpeedL");
 //    Serial.println(posPwmL);
@@ -198,12 +204,12 @@ void resetSpeedProfile(void)
 
   //Tune parameters
    ir_weight = 0.0;
-   kpL = 20; kdL = 100;
-   kpR = 20; kdR = 100;
+   kpL = 5; kdL = 20;
+   kpR = 5; kdR = 20;
   
 
-   accX = 2;// 2ticks * 100s^-1 * (30mm * pi)/(100 ticks / rev) = 188.49 mm/s^2  [ejecutando la rutina cada 10ms]
-   decX = 3; // -282.74 mm/s^
+   accX = 1;// 2ticks * 100s^-1 * (30mm * pi)/(100 ticks / rev) = 188.49 mm/s^2  [ejecutando la rutina cada 10ms]
+   decX = 1; // -282.74 mm/s^
 
    
 

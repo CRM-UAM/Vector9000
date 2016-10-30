@@ -15,12 +15,12 @@
 #define MIN_VEL_EN_RECTA 225
 
 #define VEL_BASE_PUENTE 0
-#define VEL_BASE_RECTA 50
-#define VEL_BASE_CURVA 50
-#define VEL_BASE_FRENO 50
-int VEL_BASE=50;
-Vector9000 robot = Vector9000(0.0491,2950.283,0);//(kp,kd, ki);
-
+#define VEL_BASE_RECTA 13
+#define VEL_BASE_CURVA 13
+#define VEL_BASE_FRENO 13
+int VEL_BASE=13;
+//Vector9000 robot = Vector9000(0.047/20.0,4050.283/20.0,0);//(kp,kd, ki);
+Vector9000 robot = Vector9000(0.0005,45,0);
 
 boolean schedulerVELBASEOn=false;
 unsigned long nextTaskTime=4967295;
@@ -97,7 +97,7 @@ void setup(){
     pinMode(PIN_BOTON, INPUT_PULLUP);
     delay(20);
     
-    robot.calibrateIR( 5, true );
+    robot.calibrateIR( 5, false );
     
     while(!boton_pulsado()) delay(10);
     while(boton_pulsado()) delay(10);
@@ -152,6 +152,7 @@ void inline activarPuente(){
 }
 
 unsigned long nextSpeedProfile = 0;
+unsigned long nextMainPID = 0;
 void loop() {
     if(boton_pulsado()) {
       robot.setSpeed(0,0);
@@ -163,10 +164,13 @@ void loop() {
       schedulerVELBASEOn=false;
       callback();
     }
-    double errDif = robot.getErrorLine();//PID(err);
-    //printTelemetria(errDif);
-    curSpeedR = VEL_BASE + errDif;
-    curSpeedL = VEL_BASE - errDif;
+      if(millis() > nextMainPID){
+        nextMainPID=millis()+30;
+        double errDif = robot.getErrorLine();//PID(err);
+        //printTelemetria(errDif);
+        curSpeedR = VEL_BASE + errDif;
+        curSpeedL = VEL_BASE - errDif;
+      }
     
     if(millis() > nextSpeedProfile){
       nextSpeedProfile=millis()+10;
@@ -203,11 +207,16 @@ void loop() {
     }
     
 }
-/*
-void loopMesureTime(){
-  unsigned long iniTime = micros();
-  //Serial.println(iniTime);
-  speedProfile(NULL);
-  Serial.println(micros() - iniTime);
-}*/
 
+/*void loop(){
+    curSpeedR = 20;
+    curSpeedL = 20;
+        
+    if(millis() > nextSpeedProfile){
+      nextSpeedProfile=millis()+10;
+      unsigned long iniTime = micros();
+      speedProfile(NULL);
+      //Serial.println(micros() - iniTime);
+    }
+  
+}*/

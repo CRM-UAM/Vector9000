@@ -139,7 +139,9 @@ int Vector9000::readRawErrLine( void ){
 
 double Vector9000::getErrorLine( void ){
     unsigned int values[Vector9000::NUM_IR_SENSORS];
-    int error = qtrrc.readLine(values) - (Vector9000::NUM_IR_SENSORS-1)*500; //Centrar el error en el 0
+    int errorL = qtrrc.readLine(values) - (Vector9000::NUM_IR_SENSORS-1)*500; //Centrar el error en el 0
+    double errDiv200 = (double)errorL*1.0 / 170.0;
+    double error = (double)errorL + pow(errDiv200,3);
     unsigned long currentTime=micros();
 
     if(currentTime - _lastTimeExec > 1000){//Genero el error derivativo
