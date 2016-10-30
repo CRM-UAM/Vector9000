@@ -38,20 +38,18 @@ unsigned long lastEncIzq=0;
 /**
  * Control variables
  */
- extern int targetSpeedX;
- extern int targetSpeedW;
+ extern int targetSpeedL;
+ extern int targetSpeedR;
 
 /**
  * Output variable. To be readed
  */
- extern long distanceLeft;
  extern long encoderCount;
- extern float curSpeedX;
- extern float curSpeedW;
+ extern float curSpeedL;
+ extern float curSpeedR;
  extern float accX;
  extern float decX;
- extern float accW;
- extern float decW;
+
 
 /**
  * Tune variables
@@ -114,7 +112,7 @@ void setup(){
 
 
 void inline activarCurvas(){
-  curSpeedX=VEL_BASE_CURVA;
+  VEL_BASE=VEL_BASE_CURVA;
   robot.config();
 }
 unsigned long contRecta=0;
@@ -122,7 +120,7 @@ void inline activarFreno(){
   enRecta=false;
   unsigned int longRecta= contRecta*1;
   if(longRecta>30)longRecta=30;
-  curSpeedX=VEL_BASE_FRENO-longRecta;
+  VEL_BASE=VEL_BASE_FRENO-longRecta;
   robot.config();
   //Configurar duracion de frenada
   schedulerVELBASEOn=true;
@@ -134,7 +132,7 @@ void inline activarFreno(){
 
 void inline activarRecta(){
   enRecta=true;
-  curSpeedX= VEL_BASE_RECTA;
+  VEL_BASE= VEL_BASE_RECTA;
   //Configurar el punto de frenada
   //schedulerVELBASEOn=true;
   //callback=&activarFreno;
@@ -145,7 +143,7 @@ void inline activarRecta(){
 
 void inline activarPuente(){
   enRecta=false;
-  curSpeedX = VEL_BASE_PUENTE;
+  VEL_BASE=VEL_BASE_PUENTE;
   robot.config();
   //Configurar duracion de frenada
   schedulerVELBASEOn=true;
@@ -165,10 +163,13 @@ void loop() {
       schedulerVELBASEOn=false;
       callback();
     }
-  
-    curSpeedX = VEL_BASE;
+    double errDif = robot.getErrorLine();//PID(err);
+    //printTelemetria(errDif);
+    curSpeedR = VEL_BASE + errDif;
+    curSpeedL = VEL_BASE - errDif;
+    
     if(millis() > nextSpeedProfile){
-      nextSpeedProfile=millis()+25;
+      nextSpeedProfile=millis()+10;
       speedProfile(NULL);
     }
     
@@ -202,11 +203,11 @@ void loop() {
     }
     
 }
-
+/*
 void loopMesureTime(){
   unsigned long iniTime = micros();
   //Serial.println(iniTime);
   speedProfile(NULL);
   Serial.println(micros() - iniTime);
-}
+}*/
 

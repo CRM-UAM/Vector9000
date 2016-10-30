@@ -175,7 +175,18 @@ void calculateMotorPwm(void) // encoder PD controller
 
 
     posErrorWir = robot.readRawErrLine();
-    Serial.print(posErrorWir);
+    posErrorWir /= 35.0; //-100 ... +100
+    Serial.print("Time: ");
+    Serial.println(micros());
+    Serial.print("SppedX: ");
+    Serial.println(curSpeedX);
+    Serial.print("EncoderFedback: ");
+    Serial.println(encoderFeedbackX);
+    
+    Serial.print("SppedW: ");
+    Serial.println(curSpeedW);
+    Serial.print("ErrLin: ");
+    Serial.println(posErrorWir);
 
     /*if(posErrorWir < 20){
       posErrorW = 0;
@@ -192,10 +203,13 @@ void calculateMotorPwm(void) // encoder PD controller
     oldPosErrorW = posErrorW;
     oldPosErrorWir = posErrorWir;
 
-    leftBaseSpeed = posPwmX - ( (1-ir_weight)*posPwmW + ir_weight*posPwmWir);
-    rightBaseSpeed = posPwmX + ( (1-ir_weight)*posPwmW + ir_weight*posPwmWir);
+    leftBaseSpeed = posPwmX - posPwmWir;
+    rightBaseSpeed = posPwmX + posPwmWir;
 
-
+    Serial.print("VelIzq: ");
+    Serial.println(leftBaseSpeed);
+    Serial.print("VelDer: ");
+    Serial.println(rightBaseSpeed);
   //  Serial.print("-");
   //  Serial.println((rightBaseSpeed-leftBaseSpeed)/2);
     robot.setSpeed(leftBaseSpeed,rightBaseSpeed);
@@ -230,15 +244,15 @@ void resetSpeedProfile(void)
 
   //Tune parameters
    ir_weight = 0.0;
-   kpX = 0.95; kdX = 10;
-   kpW = 0.8; kdW = 17;//used in straight
+   kpX = 0.95/5; kdX = 10/5;
+   kpW = 0.8/5; kdW = 17/5;//used in straight
    kpW0 = kpW; kdW0 = kdW;//used in straight
-   kpWir = 14.4; kdWir = 25;//used with IR errors
+   kpWir = 0.144; kdWir = 2;//used with IR errors
 
    accX = 45;//6m/s/s
    decX = 90;
-   accX = 200;//6m/s/s
-   decX = 200;
+   accX = 0.5;//6m/s/s
+   decX = 1;
    accW = 1; //cm/s^2
    decW = 1;
 
