@@ -151,17 +151,17 @@ void calculateMotorPwm(void) // encoder PD controller
 //    Serial.print("SppedR: ");
 //    Serial.println(curSpeedR);
 //    Serial.print("EncoderFedbackL: ");
-    Serial.print(leftEncoderChange);
-    Serial.print(" ");
-    Serial.print(rightEncoderChange);
+//    Serial.print(leftEncoderChange);
+//    Serial.print(" ");
+//    Serial.print(rightEncoderChange);
 
       posPwmL = kpL * posErrorL + kdL * (posErrorL - oldPosErrorL);
       posPwmR = kpR * posErrorR + kdR * (posErrorR - oldPosErrorR);
 
-     Serial.print(" ");
-    Serial.print((1.0*posPwmL)/10.0);
-    Serial.print(" ");
-    Serial.println((1.0*posPwmR)/10.0);
+//     Serial.print(" ");
+//    Serial.print((1.0*posPwmL)/10.0);
+//    Serial.print(" ");
+//    Serial.println((1.0*posPwmR)/10.0);
 
 //    Serial.print("OutputSpeedL");
 //    Serial.println(posPwmL);

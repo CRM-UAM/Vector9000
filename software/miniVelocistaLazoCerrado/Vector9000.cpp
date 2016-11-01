@@ -16,17 +16,17 @@ const uint8_t Vector9000::M_DER_DIR1_PIN = 11;
 const uint8_t Vector9000::M_DER_DIR2_PIN = 9;
 const uint8_t Vector9000::M_DER_PWM_PIN = 6;
 const uint8_t Vector9000::LED = 13;
-const uint8_t Vector9000::NUM_IR_SENSORS = 8;
+const uint8_t Vector9000::NUM_IR_SENSORS = 6;
 const int Vector9000::TIMEOUT = 2000;
 
-const uint8_t Vector9000::IR1 = 4;
+//const uint8_t Vector9000::IR1 = 4;
 const uint8_t Vector9000::IR2 = 8;
 const uint8_t Vector9000::IR3 = A5;
 const uint8_t Vector9000::IR4 = A4;
 const uint8_t Vector9000::IR5 = A3;
 const uint8_t Vector9000::IR6 = A2;
 const uint8_t Vector9000::IR7 = A1;
-const uint8_t Vector9000::IR8 = A0;
+//const uint8_t Vector9000::IR8 = A0;
 
 // FIXME: colocar los pines de los encoders correctos
 const uint8_t Vector9000::ENC_IZQ_PIN = 2;
@@ -38,7 +38,7 @@ const uint8_t Vector9000::PULSOS_POR_REVOLUCION = 50;
 
 /********* PLACA SENSORES QTR-8RC **********/
 QTRSensorsRC qtrrc((unsigned char[]) {
-   Vector9000::IR1, Vector9000::IR2, Vector9000::IR3, Vector9000::IR4, Vector9000::IR5, Vector9000::IR6, Vector9000::IR7, Vector9000::IR8}
+   Vector9000::IR2, Vector9000::IR3, Vector9000::IR4, Vector9000::IR5, Vector9000::IR6, Vector9000::IR7}
 , Vector9000::NUM_IR_SENSORS, Vector9000::TIMEOUT, QTR_NO_EMITTER_PIN); //emisor siempre encendido
 
 
@@ -144,7 +144,7 @@ int Vector9000::readRawErrLine( void ){
 double Vector9000::getErrorLine( void ){
     unsigned int values[Vector9000::NUM_IR_SENSORS];
     int errorL = qtrrc.readLine(values) - (Vector9000::NUM_IR_SENSORS-1)*500; //Centrar el error en el 0
-    double errDiv200 = (double)errorL*1.0 / 170.0;
+    double errDiv200 = (double)errorL*1.0 / 160.0;
     double error = (double)errorL + pow(errDiv200,3);
     unsigned long currentTime=micros();
 

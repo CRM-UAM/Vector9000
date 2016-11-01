@@ -4,6 +4,9 @@
 
 #define PIN_BOTON 7
 
+#define speed2ticks(a) ( (a*600) / (31.1*3.1415) ) //speed in m/s 
+#define ticks2speed(a) ( (a/600) * (31.1*3.1415) )
+
 #define DIFF_ENCODERS_RECT 13
 #define TIME_MAX_IN_RECTA 600 //tiempo máximo que está el robot en recta antes de frena. En ms.
 #define TIME_MAX_FRENADA 30 //tiempo maximo de duracion de frenada tras recta
@@ -12,15 +15,16 @@
 #define TICK_ENC_MAX_FRENADA 100 //ticks máximos que dura la frenada
 
 #define INTERVAL_RECT_TASK 100
-#define MIN_VEL_EN_RECTA 225
+#define MIN_VEL_EN_RECTA 10
 
-#define VEL_BASE_PUENTE 0
-#define VEL_BASE_RECTA 13
-#define VEL_BASE_CURVA 13
-#define VEL_BASE_FRENO 13
-int VEL_BASE=13;
+#define VEL_BASE_PUENTE speed2ticks(1.1)
+#define VEL_BASE_RECTA speed2ticks(1.1)
+#define VEL_BASE_CURVA speed2ticks(1.1)
+#define VEL_BASE_FRENO speed2ticks(1.1)
+int VEL_BASE= speed2ticks(1.1);
 //Vector9000 robot = Vector9000(0.047/20.0,4050.283/20.0,0);//(kp,kd, ki);
-Vector9000 robot = Vector9000(0.0005,45,0);
+Vector9000 robot = Vector9000(0.0012,150,0);
+
 
 boolean schedulerVELBASEOn=false;
 unsigned long nextTaskTime=4967295;
@@ -120,7 +124,7 @@ void setup(){
     pinMode(PIN_BOTON, INPUT_PULLUP);
     delay(20);
     
-    robot.calibrateIR( 5, false );
+    robot.calibrateIR( 5, true );
     
     while(!boton_pulsado()) delay(10);
     while(boton_pulsado()) delay(10);
@@ -176,7 +180,8 @@ void inline activarPuente(){
 
 unsigned long nextSpeedProfile = 0;
 unsigned long nextMainPID = 0;
-void loopL() {
+unsigned long nextSendPos =0;
+void loop() {
     if(boton_pulsado()) {
       robot.setSpeed(0,0);
       delay(1000);
@@ -190,6 +195,7 @@ void loopL() {
       if(millis() > nextMainPID){
         nextMainPID=millis()+30;
         double errDif = robot.getErrorLine();//PID(err);
+        //Serial.println(errDif);
         //printTelemetria(errDif);
         curSpeedR = VEL_BASE + errDif;
         curSpeedL = VEL_BASE - errDif;
@@ -230,21 +236,24 @@ void loopL() {
     }
 
     if(millis() > nextSendPos){
-      nextSendPos = millis()+10;
+      nextSendPos = millis()+50;
+      Serial.print(millis());Serial.print(" ");
       Serial.print(count_enc_r);Serial.print(" ");Serial.println(count_enc_l);
     }
     
 }
 
-void loop(){
-    curSpeedR = 3 ;
-    curSpeedL = 10;
-        
+void loopL(){
+    curSpeedR = -2 ;
+    curSpeedL = -2;
+    //Serial.println(robot.readRawErrLine() );   
+
+    
     if(millis() > nextSpeedProfile){
       nextSpeedProfile=millis()+10;
       unsigned long iniTime = micros();
       speedProfile(NULL);
-      //Serial.println(micros() - iniTime);
+      Serial.println(micros() - iniTime);
     }
   
 }
