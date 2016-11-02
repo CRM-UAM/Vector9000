@@ -2,7 +2,7 @@ Vector-9000, a fast line follower robot
 ===============
 
 
-![Image](/home/carlosgs/GitRepos/CRM/Vector9000/img/vector9000_v3.jpg)
+![Image](img/vector9000_v3.jpg)
 
 Description
 --------
