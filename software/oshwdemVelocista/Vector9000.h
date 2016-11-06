@@ -73,7 +73,6 @@ class Vector9000
      * @return  error line value [-255, 255]
      */
     double getErrorLine( void );
-    int readRawErrLine( void );
 
     static const uint8_t M_IZQ_PWM_PIN, M_IZQ_DIR1_PIN, M_IZQ_DIR2_PIN, M_DER_DIR1_PIN, M_DER_DIR2_PIN, M_DER_PWM_PIN, LED, NUM_IR_SENSORS, ENC_IZQ_PIN, ENC_DER_PIN, PULSOS_POR_REVOLUCION;;
     static const int TIMEOUT;

@@ -14,11 +14,11 @@
 #define INTERVAL_RECT_TASK 100
 #define MIN_VEL_EN_RECTA 225
 
-#define VEL_BASE_PUENTE 0
-#define VEL_BASE_RECTA 50
-#define VEL_BASE_CURVA 50
-#define VEL_BASE_FRENO 50
-int VEL_BASE=50;
+int VEL_BASE_PUENTE=0;
+int VEL_BASE_RECTA=102;//120
+int VEL_BASE_CURVA=102;//110
+int VEL_BASE_FRENO=-45;
+int VEL_BASE=80;//105;
 Vector9000 robot = Vector9000(0.0491,2950.283,0);//(kp,kd, ki);
 
 
@@ -33,34 +33,6 @@ boolean enRecta=false;
 unsigned long nextCheckRectTask=0;
 unsigned long lastEncDer=0;
 unsigned long lastEncIzq=0;
-
-#include "speedController.h"
-/**
- * Control variables
- */
- extern int targetSpeedX;
- extern int targetSpeedW;
-
-/**
- * Output variable. To be readed
- */
- extern long distanceLeft;
- extern long encoderCount;
- extern float curSpeedX;
- extern float curSpeedW;
- extern float accX;
- extern float decX;
- extern float accW;
- extern float decW;
-
-/**
- * Tune variables
- */
-// extern float ir_weight;
-// extern float kpX, kdX;
-// extern float kpW, kdW;//used in straight
-// extern float kpW0, kdW0;//used in straight
-// extern float kpWir, kdWir;//used with IR errors
 
 void printTelemetria(float err){
     Serial.print("pT ");
@@ -100,21 +72,38 @@ void setup(){
     delay(20);
     
     robot.calibrateIR( 5, true );
-    
-    while(!boton_pulsado()) delay(10);
+    long millisini = millis();
+    while(!boton_pulsado()){
+      delay(10);
+      if (millis() > millisini + 5000){
+        robot.ledOn();
+         VEL_BASE=90;//105;
+         VEL_BASE_RECTA = VEL_BASE;
+         VEL_BASE_FRENO = VEL_BASE;
+         
+      }
+    }
     while(boton_pulsado()) delay(10);
     
     attachInterrupt(digitalPinToInterrupt(Vector9000::ENC_DER_PIN), aumentarCuentaDerecha, CHANGE); 
     attachInterrupt(digitalPinToInterrupt(Vector9000::ENC_IZQ_PIN), aumentarCuentaIzquierda, CHANGE);
-
-    delay(4960);
-    resetSpeedProfile();
+  robot.ledOff();
+    delay(4975);
 }
 
-
+long sumErr=0;
+int lastErr=0;
+inline double PID(int errLine){
+  int err=errLine-3500;
+  sumErr+=err;
+  double pid = (robot._kp * err*1.0 + robot._kd * (err-lastErr)*1.0 + robot._ki * sumErr*1.0 ) / (100 * 3500.);
+  //Serial.print(err);Serial.print(" - ");Serial.println(pid);
+  lastErr=err;
+  return pid;
+}
 
 void inline activarCurvas(){
-  curSpeedX=VEL_BASE_CURVA;
+  VEL_BASE=VEL_BASE_CURVA;
   robot.config();
 }
 unsigned long contRecta=0;
@@ -122,7 +111,7 @@ void inline activarFreno(){
   enRecta=false;
   unsigned int longRecta= contRecta*1;
   if(longRecta>30)longRecta=30;
-  curSpeedX=VEL_BASE_FRENO-longRecta;
+  VEL_BASE=VEL_BASE_FRENO-longRecta;
   robot.config();
   //Configurar duracion de frenada
   schedulerVELBASEOn=true;
@@ -134,7 +123,7 @@ void inline activarFreno(){
 
 void inline activarRecta(){
   enRecta=true;
-  curSpeedX= VEL_BASE_RECTA;
+  VEL_BASE= VEL_BASE_RECTA;
   //Configurar el punto de frenada
   //schedulerVELBASEOn=true;
   //callback=&activarFreno;
@@ -145,7 +134,7 @@ void inline activarRecta(){
 
 void inline activarPuente(){
   enRecta=false;
-  curSpeedX = VEL_BASE_PUENTE;
+  VEL_BASE=VEL_BASE_PUENTE;
   robot.config();
   //Configurar duracion de frenada
   schedulerVELBASEOn=true;
@@ -153,7 +142,7 @@ void inline activarPuente(){
   nextTaskTime=millis()+TIME_MAX_PUENTE;
 }
 
-unsigned long nextSpeedProfile = 0;
+
 void loop() {
     if(boton_pulsado()) {
       robot.setSpeed(0,0);
@@ -165,12 +154,11 @@ void loop() {
       schedulerVELBASEOn=false;
       callback();
     }
-  
-    curSpeedX = VEL_BASE;
-    if(millis() > nextSpeedProfile){
-      nextSpeedProfile=millis()+25;
-      speedProfile(NULL);
-    }
+    //int err = robot.readLine();
+    double errDif = robot.getErrorLine();//PID(err);
+    //printTelemetria(errDif);
+    robot.setSpeed( VEL_BASE - errDif, VEL_BASE + errDif );
+
     
 
     if(millis()>nextCheckRectTask){
@@ -192,9 +180,9 @@ void loop() {
         robot.ledOff();
         contRecta=0;
       }
-      /*if(velDer > 260 || velIzq >260){
-        activarPuente();
-      }*/
+      if(velDer > 260 || velIzq >260){
+        //activarPuente();
+      }
       lastEncIzq = cuentaEncoderIzquierdo;
       lastEncDer = cuentaEncoderDerecho;
       //long cuenta = cuentaEncoderIzquierdo - cuentaEncoderDerecho;
@@ -202,11 +190,8 @@ void loop() {
     }
     
 }
-
-void loopMesureTime(){
-  unsigned long iniTime = micros();
-  //Serial.println(iniTime);
-  speedProfile(NULL);
-  Serial.println(micros() - iniTime);
-}
+/*void loop(){
+  Serial.println(cuentaEncoderIzquierdo);
+  delay(500);
+}*/
 

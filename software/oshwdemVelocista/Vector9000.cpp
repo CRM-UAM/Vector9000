@@ -75,10 +75,9 @@ void Vector9000::setRSpeed( int s ){
         digitalWrite(Vector9000::M_DER_DIR1_PIN, HIGH);
         analogWrite(Vector9000::M_DER_PWM_PIN , s);
     }else if(s < 0) {// Hacia atras
-        //digitalWrite(Vector9000::M_DER_DIR2_PIN, HIGH);
-        //digitalWrite(Vector9000::M_DER_DIR1_PIN, LOW);
-        //analogWrite(Vector9000::M_DER_PWM_PIN , -s);
-        digitalWrite(Vector9000::M_DER_PWM_PIN, LOW);// Motor apagado
+        digitalWrite(Vector9000::M_DER_DIR2_PIN, HIGH);
+        digitalWrite(Vector9000::M_DER_DIR1_PIN, LOW);
+        analogWrite(Vector9000::M_DER_PWM_PIN , -s);
     }else {//Parado
         digitalWrite(Vector9000::M_DER_PWM_PIN, LOW);// Motor apagado
     }
@@ -90,10 +89,9 @@ void Vector9000::setLSpeed( int s ){
         digitalWrite(Vector9000::M_IZQ_DIR1_PIN, HIGH);
         analogWrite(Vector9000::M_IZQ_PWM_PIN , s);
     }else if(s < 0) {// Hacia atras
-        //digitalWrite(Vector9000::M_IZQ_DIR2_PIN, HIGH);
-        //digitalWrite(Vector9000::M_IZQ_DIR1_PIN, LOW);
-        //analogWrite(Vector9000::M_IZQ_PWM_PIN , -s);
-        digitalWrite(Vector9000::M_IZQ_PWM_PIN, LOW);// Motor apagado
+        digitalWrite(Vector9000::M_IZQ_DIR2_PIN, HIGH);
+        digitalWrite(Vector9000::M_IZQ_DIR1_PIN, LOW);
+        analogWrite(Vector9000::M_IZQ_PWM_PIN , -s);
     }else {//Parado
         digitalWrite(Vector9000::M_IZQ_PWM_PIN, LOW);// Motor apagado
     }
@@ -130,11 +128,6 @@ void Vector9000::getIRRaw( unsigned int *values ){
 unsigned int Vector9000::readLine( void ){
     unsigned int values[Vector9000::NUM_IR_SENSORS];
     return qtrrc.readLine(values);
-}
-
-int Vector9000::readRawErrLine( void ){
-    unsigned int values[Vector9000::NUM_IR_SENSORS];
-    return qtrrc.readLine(values) - (Vector9000::NUM_IR_SENSORS-1)*500; //Centrar el error en el 0
 }
 
 double Vector9000::getErrorLine( void ){
