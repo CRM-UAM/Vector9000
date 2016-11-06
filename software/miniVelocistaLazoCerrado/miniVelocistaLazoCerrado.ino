@@ -17,11 +17,11 @@
 #define INTERVAL_RECT_TASK 100
 #define MIN_VEL_EN_RECTA 10
 
-#define VEL_BASE_PUENTE speed2ticks(1.1)
-#define VEL_BASE_RECTA speed2ticks(1.1)
-#define VEL_BASE_CURVA speed2ticks(1.1)
-#define VEL_BASE_FRENO speed2ticks(1.1)
-int VEL_BASE= speed2ticks(1.1);
+int VEL_BASE_PUENTE=speed2ticks(1);
+int VEL_BASE_RECTA=speed2ticks(1);
+int VEL_BASE_CURVA=speed2ticks(1);
+int VEL_BASE_FRENO=speed2ticks(1);
+int VEL_BASE= speed2ticks(1);
 //Vector9000 robot = Vector9000(0.047/20.0,4050.283/20.0,0);//(kp,kd, ki);
 Vector9000 robot = Vector9000(0.0012,150,0);
 
@@ -125,8 +125,18 @@ void setup(){
     delay(20);
     
     robot.calibrateIR( 5, true );
-    
-    while(!boton_pulsado()) delay(10);
+    long millisini = millis();
+    while(!boton_pulsado()){
+      delay(10);
+      if (millis() > millisini + 5000){
+        robot.ledOn();
+          VEL_BASE_PUENTE=speed2ticks(0.9);
+         VEL_BASE_RECTA=speed2ticks(0.9);
+         VEL_BASE_CURVA=speed2ticks(0.9);
+         VEL_BASE_FRENO=speed2ticks(0.9);
+         VEL_BASE= speed2ticks(0.93);
+      }
+    }
     while(boton_pulsado()) delay(10);
     
     attachInterrupt(digitalPinToInterrupt(Vector9000::ENC_DER_PIN), aumentarCuentaDerecha, CHANGE); 
@@ -213,7 +223,7 @@ void loop() {
        long velDer=(count_enc_r-lastEncDer);
       
       long diferencia = (velIzq > velDer) ? (velIzq - velDer) : (velDer - velIzq);
-      if( diferencia < DIFF_ENCODERS_RECT && velIzq > MIN_VEL_EN_RECTA){
+      if( diferencia < speed2ticks(0.05) && velIzq > speed2ticks(0.98)){
         activarRecta();
       }else if(enRecta && diferencia > DIFF_ENCODERS_RECT+DIFF_ENCODERS_RECT/3 ){
         activarFreno();
