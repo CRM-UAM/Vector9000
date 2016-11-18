@@ -82,8 +82,7 @@ if __name__ == '__main__':
     parser.add_argument('fName', help='Nombre del fichero a leer')
     args = parser.parse_args()
     fNmame = args.fName
-    with open(args.fName) as f:
-        numLines = sum(1 for line in f)
+
     # importEncodersData(args.fName, numLines)
     # tIni,_,_,_= list_of_pos[0]
     # listX = []

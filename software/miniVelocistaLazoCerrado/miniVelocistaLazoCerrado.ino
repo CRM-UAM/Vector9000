@@ -17,14 +17,19 @@
 #define INTERVAL_RECT_TASK 100
 #define MIN_VEL_EN_RECTA 10
 
-int VEL_BASE_PUENTE=speed2ticks(1);
+/*int VEL_BASE_PUENTE=speed2ticks(1);
 int VEL_BASE_RECTA=speed2ticks(1);
 int VEL_BASE_CURVA=speed2ticks(1);
 int VEL_BASE_FRENO=speed2ticks(1);
-int VEL_BASE= speed2ticks(1);
+int VEL_BASE= speed2ticks(1);*/
 //Vector9000 robot = Vector9000(0.047/20.0,4050.283/20.0,0);//(kp,kd, ki);
-Vector9000 robot = Vector9000(0.0012,150,0);
-
+//Vector9000 robot = Vector9000(0.0012,150,0);
+Vector9000 robot = Vector9000(0.0491,2950.283,0);//(kp,kd, ki);
+int VEL_BASE_PUENTE=0;
+int VEL_BASE_RECTA=102;//120
+int VEL_BASE_CURVA=102;//110
+int VEL_BASE_FRENO=-45;
+int VEL_BASE=45;//105;
 
 boolean schedulerVELBASEOn=false;
 unsigned long nextTaskTime=4967295;
@@ -188,9 +193,35 @@ void inline activarPuente(){
   nextTaskTime=millis()+TIME_MAX_PUENTE;
 }
 
+double posX=0;
+double posY=0;
+double ang =0;
+long last_count_enc_r=0;
+long last_count_enc_l=0;
+#define DIAMETRO 30.4
+#define N_MOTOR  10.0
+#define RES_ENC  6.0
+#define LEN 165
+float Cm = (float(3.1416 * DIAMETRO))/(float(N_MOTOR * RES_ENC));
+
+
+void inline calcularPosOdometria(){
+  long enc1 = count_enc_r - last_count_enc_r;
+  last_count_enc_r=count_enc_r;
+  long enc2 = count_enc_l - last_count_enc_l;
+  last_count_enc_l=count_enc_l;
+  float avance1 = (float(enc1))*Cm;
+  float avance2 = (float(enc2))*Cm;
+  float varPosC = (avance1+avance2)/2;
+  ang +=  (avance1-avance2)/LEN;
+  posX +=varPosC*cos(ang);
+  posY +=varPosC*sin(ang);
+}
+
 unsigned long nextSpeedProfile = 0;
 unsigned long nextMainPID = 0;
 unsigned long nextSendPos =0;
+unsigned long nextCalcPos=0;
 void loop() {
     if(boton_pulsado()) {
       robot.setSpeed(0,0);
@@ -198,11 +229,11 @@ void loop() {
       setup();
       return;
     }
-    if(schedulerVELBASEOn && (millis()>nextTaskTime)) {// || cuentaEncoderDerecho>nextEndDerTaskCount || cuentaEncoderIzquierdo>nextEndIzqTaskCount) ){ //planificador por tiempo para acelerar/frenar en recta
-      schedulerVELBASEOn=false;
-      callback();
-    }
-      if(millis() > nextMainPID){
+//    if(schedulerVELBASEOn && (millis()>nextTaskTime)) {// || cuentaEncoderDerecho>nextEndDerTaskCount || cuentaEncoderIzquierdo>nextEndIzqTaskCount) ){ //planificador por tiempo para acelerar/frenar en recta
+//      schedulerVELBASEOn=false;
+//      callback();
+//    }
+      /*if(millis() > nextMainPID){
         nextMainPID=millis()+30;
         double errDif = robot.getErrorLine();//PID(err);
         //Serial.println(errDif);
@@ -214,42 +245,52 @@ void loop() {
     if(millis() > nextSpeedProfile){
       nextSpeedProfile=millis()+10;
       speedProfile(NULL);
-    }
+    }*/
+
+    double errDif = robot.getErrorLine();//PID(err);
+    //printTelemetria(errDif);
+    robot.setSpeed( VEL_BASE - errDif, VEL_BASE + errDif );
     
 
-    if(millis()>nextCheckRectTask){
-      nextCheckRectTask=millis()+INTERVAL_RECT_TASK;
-       long velIzq=(count_enc_l-lastEncIzq);
-       long velDer=(count_enc_r-lastEncDer);
-      
-      long diferencia = (velIzq > velDer) ? (velIzq - velDer) : (velDer - velIzq);
-      if( diferencia < speed2ticks(0.05) && velIzq > speed2ticks(0.98)){
-        activarRecta();
-      }else if(enRecta && diferencia > DIFF_ENCODERS_RECT+DIFF_ENCODERS_RECT/3 ){
-        activarFreno();
-      }
-      if(enRecta){
-        robot.ledOn();
-        contRecta++;
-      }
-      else{
-        robot.ledOff();
-        contRecta=0;
-      }
-      /*if(velDer > 260 || velIzq >260){
-        activarPuente();
-      }*/
-      lastEncIzq = count_enc_l;
-      lastEncDer = count_enc_r;
-      //long cuenta = cuentaEncoderIzquierdo - cuentaEncoderDerecho;
-      //Serial.print(millis());Serial.print(" ");Serial.print(velDer);Serial.print("  ");Serial.print(velIzq);Serial.print("  "); Serial.print(diferencia);Serial.print("  "); Serial.print(enRecta*100);Serial.print("  "); Serial.println(cuenta);
-    }
+//    if(millis()>nextCheckRectTask){
+//      nextCheckRectTask=millis()+INTERVAL_RECT_TASK;
+//       long velIzq=(count_enc_l-lastEncIzq);
+//       long velDer=(count_enc_r-lastEncDer);
+//      
+//      long diferencia = (velIzq > velDer) ? (velIzq - velDer) : (velDer - velIzq);
+//      if( diferencia < speed2ticks(0.05) && velIzq > speed2ticks(0.98)){
+//        activarRecta();
+//      }else if(enRecta && diferencia > DIFF_ENCODERS_RECT+DIFF_ENCODERS_RECT/3 ){
+//        activarFreno();
+//      }
+//      if(enRecta){
+//        robot.ledOn();
+//        contRecta++;
+//      }
+//      else{
+//        robot.ledOff();
+//        contRecta=0;
+//      }
+//      if(velDer > 260 || velIzq >260){
+//        activarPuente();
+//      }*/
+//      lastEncIzq = count_enc_l;
+//      lastEncDer = count_enc_r;
+//      //long cuenta = cuentaEncoderIzquierdo - cuentaEncoderDerecho;
+//      //Serial.print(millis());Serial.print(" ");Serial.print(velDer);Serial.print("  ");Serial.print(velIzq);Serial.print("  "); Serial.print(diferencia);Serial.print("  "); Serial.print(enRecta*100);Serial.print("  "); Serial.println(cuenta);
+//    }
 
     if(millis() > nextSendPos){
-      nextSendPos = millis()+50;
+      nextSendPos = millis()+100;
       Serial.print(millis());Serial.print(" ");
-      Serial.print(count_enc_r);Serial.print(" ");Serial.println(count_enc_l);
+      Serial.print(ang);Serial.print(" ");Serial.print(posX);Serial.print(" ");Serial.println(posY);
     }
+
+    if(millis() > nextCalcPos){
+      nextCalcPos = millis()+20;
+      calcularPosOdometria();
+    }
+
     
 }
 
